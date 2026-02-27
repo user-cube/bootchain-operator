@@ -1,0 +1,13 @@
+apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - service: redis
+      port: 6379
+      timeout: 30s

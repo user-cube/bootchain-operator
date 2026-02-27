@@ -1,0 +1,39 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - core.bootchain.ruicoelho.dev
+  resources:
+  - bootdependencies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.bootchain.ruicoelho.dev
+  resources:
+  - bootdependencies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.bootchain.ruicoelho.dev
+  resources:
+  - bootdependencies/status
+  verbs:
+  - get
+  - patch
+  - update

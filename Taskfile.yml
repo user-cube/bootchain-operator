@@ -1,0 +1,141 @@
+version: "3"
+
+vars:
+  IMG: bootchain-operator:latest
+  CRD_NAME: core.bootchain.ruicoelho.dev_bootdependencies.yaml
+
+tasks:
+  # ── Code generation ────────────────────────────────────────────────────────
+  generate:
+    desc: Regenerate DeepCopy methods and CRD manifests
+    cmds:
+      - make generate manifests
+
+  # ── Build ──────────────────────────────────────────────────────────────────
+  build:
+    desc: Build the operator binary
+    cmds:
+      - make build
+
+  docker-build:
+    desc: Build the operator Docker image
+    cmds:
+      - make docker-build IMG={{.IMG}}
+
+  # ── Tests ──────────────────────────────────────────────────────────────────
+  test:
+    desc: Run unit and controller tests
+    cmds:
+      - make test
+
+  # ── Lint ───────────────────────────────────────────────────────────────────
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - make lint
+
+  # ── CRD ────────────────────────────────────────────────────────────────────
+  install-crd:
+    desc: Install the BootDependency CRD into the current cluster
+    cmds:
+      - kubectl apply -f config/crd/bases/{{.CRD_NAME}}
+
+  uninstall-crd:
+    desc: Remove the BootDependency CRD from the current cluster
+    cmds:
+      - kubectl delete -f config/crd/bases/{{.CRD_NAME}} --ignore-not-found
+
+  # ── Run locally ────────────────────────────────────────────────────────────
+  run:
+    desc: Run the operator locally (controller only, webhooks disabled)
+    deps: [install-crd]
+    cmds:
+      - ENABLE_WEBHOOKS=false go run ./cmd/main.go
+
+  run-with-webhook:
+    desc: Run the operator locally with the mutating webhook (requires dev certs)
+    deps: [install-crd]
+    vars:
+      CERT_DIR: /tmp/bootchain-webhook-certs
+    cmds:
+      - go run ./cmd/main.go
+          --webhook-cert-path={{.CERT_DIR}}
+          --webhook-cert-name=tls.crt
+          --webhook-cert-key=tls.key
+
+  webhook-proxy:
+    desc: Start socat proxy so the Colima VM (IPv4) can reach the webhook server (IPv6 socket on macOS)
+    cmds:
+      - socat TCP4-LISTEN:9444,fork,reuseaddr TCP6:[::1]:9443
+
+  # ── Webhook dev setup ───────────────────────────────────────────────────────
+  webhook-gen-certs:
+    desc: Generate self-signed TLS certs for local webhook development
+    cmds:
+      - bash hack/gen-dev-certs.sh
+
+  webhook-register:
+    desc: Register the MutatingWebhookConfiguration pointing to localhost
+    cmds:
+      - bash hack/register-dev-webhook.sh
+
+  webhook-enable-namespace:
+    desc: Label the default namespace to activate the dev webhook
+    cmds:
+      - kubectl label namespace default bootchain-webhook=enabled --overwrite
+
+  webhook-disable-namespace:
+    desc: Remove the webhook label from the default namespace
+    cmds:
+      - kubectl label namespace default bootchain-webhook- --overwrite || true
+
+  webhook-teardown:
+    desc: Remove the dev webhook configurations from the cluster
+    cmds:
+      - kubectl delete mutatingwebhookconfiguration bootchain-dev-webhook --ignore-not-found
+      - kubectl delete validatingwebhookconfiguration bootchain-dev-validating-webhook --ignore-not-found
+
+  webhook-setup:
+    desc: Full dev webhook setup (certs + register + label namespace)
+    cmds:
+      - task: webhook-gen-certs
+      - task: webhook-register
+      - task: webhook-enable-namespace
+
+  # ── Deploy / undeploy ──────────────────────────────────────────────────────
+  deploy:
+    desc: Deploy the operator to the cluster (requires docker-build first)
+    cmds:
+      - make deploy IMG={{.IMG}}
+
+  undeploy:
+    desc: Remove the operator from the cluster
+    cmds:
+      - make undeploy
+
+  # ── Samples ────────────────────────────────────────────────────────────────
+  apply-sample:
+    desc: Apply the sample BootDependency manifest
+    cmds:
+      - kubectl apply -f config/samples/core_v1alpha1_bootdependency.yaml
+
+  delete-sample:
+    desc: Delete the sample BootDependency manifest
+    cmds:
+      - kubectl delete -f config/samples/core_v1alpha1_bootdependency.yaml --ignore-not-found
+
+  # ── Helpers ────────────────────────────────────────────────────────────────
+  deps:
+    desc: Tidy and download Go modules
+    cmds:
+      - go mod tidy
+
+  fmt:
+    desc: Format Go source files
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
