@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/user-cube/bootchain-operator/compare/v1.2.1...v1.2.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* update LICENSE ([24587f3](https://github.com/user-cube/bootchain-operator/commit/24587f3559ee1212146c38ff64cc7018a885b118))
+
 ## [1.2.1](https://github.com/user-cube/bootchain-operator/compare/v1.2.0...v1.2.1) (2026-02-28)
 
 
