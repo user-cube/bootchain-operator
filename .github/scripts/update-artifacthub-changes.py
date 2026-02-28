@@ -146,8 +146,8 @@ def main() -> None:
     data = yaml.safe_load(pkg_file.read_text(encoding="utf-8")) or {}
     data["version"] = args.version
     data["createdAt"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    if changes:
-        data["changes"] = changes
+    # Always replace changes with the parsed list for this version (removes previous version's entries)
+    data["changes"] = changes
 
     with open(pkg_file, "w", encoding="utf-8") as f:
         yaml.dump(

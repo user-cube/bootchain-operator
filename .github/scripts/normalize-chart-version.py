@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Strip optional 'v' prefix from version and appVersion in a Helm Chart.yaml.
-Chart version and appVersion must be semver without prefix (e.g. 1.0.0) for OCI and Artifact Hub.
+Normalise Chart.yaml version fields:
+- version: strip 'v' prefix (semver only for OCI/Artifact Hub).
+- appVersion: ensure 'v' prefix when it's a semver (e.g. 1.0.1 -> v1.0.1, matches image tag).
 
 Usage:
   python normalize-chart-version.py <path-to-Chart.yaml>
@@ -15,7 +16,9 @@ from pathlib import Path
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Strip 'v' prefix from Chart.yaml version and appVersion")
+    parser = argparse.ArgumentParser(
+        description="Strip 'v' prefix from Chart.yaml version (chart version only; appVersion unchanged)"
+    )
     parser.add_argument("chart_yaml", type=Path, help="Path to Chart.yaml")
     args = parser.parse_args()
 
@@ -25,9 +28,15 @@ def main() -> None:
 
     text = path.read_text(encoding="utf-8")
     original = text
-    # Strip leading 'v' from version: and appVersion: lines
+    # Chart version: strip 'v' for OCI/Artifact Hub (semver only)
     text = re.sub(r"^(\s*version:\s*)v([\d.]+\S*)\s*$", r"\1\2", text, flags=re.MULTILINE)
-    text = re.sub(r"^(\s*appVersion:\s*)v([\d.]+\S*)\s*$", r"\1\2", text, flags=re.MULTILINE)
+    # appVersion: ensure 'v' prefix (e.g. 1.0.1 -> v1.0.1) to match image tags
+    text = re.sub(
+        r"^(\s*appVersion:\s*)(\d+\.\d+\.\d+\S*)\s*$",
+        r"\1v\2",
+        text,
+        flags=re.MULTILINE,
+    )
     if text != original:
         path.write_text(text, encoding="utf-8")
         print(f"Normalized version/appVersion in {path}")
