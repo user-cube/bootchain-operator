@@ -77,7 +77,7 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			allReady = false
 			continue
 		}
-		conn.Close()
+		_ = conn.Close()
 		resolved++
 		log.Info("Dependency reachable", "dependency", label, "port", dep.Port)
 	}

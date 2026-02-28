@@ -118,11 +118,14 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 
 	target := depTarget(dep)
 
+	// The script polls the target every second until it is reachable.
+	// `timeout` wraps the loop so the init container does not block forever.
 	script := fmt.Sprintf(
 		"echo 'Waiting for %s:%d...'; "+
-			"until nc -z %s %d; do sleep 1; done; "+
+			"timeout %s sh -c 'until nc -z %s %d; do sleep 1; done'; "+
 			"echo '%s:%d is ready'",
 		target, dep.Port,
+		timeout,
 		target, dep.Port,
 		target, dep.Port,
 	)
