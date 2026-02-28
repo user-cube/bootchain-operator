@@ -98,9 +98,13 @@ func (v *BootDependencyCustomValidator) buildGraph(ctx context.Context, bd *core
 			// Skip — the incoming bd will overwrite this entry below.
 			continue
 		}
+		// Only in-cluster service deps participate in the cycle graph.
+		// External host deps are leaf nodes and can never form a BootDependency cycle.
 		deps := make([]string, 0, len(existing.Spec.DependsOn))
 		for _, dep := range existing.Spec.DependsOn {
-			deps = append(deps, dep.Service)
+			if dep.Service != "" {
+				deps = append(deps, dep.Service)
+			}
 		}
 		graph[existing.Name] = deps
 	}
@@ -108,7 +112,9 @@ func (v *BootDependencyCustomValidator) buildGraph(ctx context.Context, bd *core
 	// Add the incoming object (create or update).
 	deps := make([]string, 0, len(bd.Spec.DependsOn))
 	for _, dep := range bd.Spec.DependsOn {
-		deps = append(deps, dep.Service)
+		if dep.Service != "" {
+			deps = append(deps, dep.Service)
+		}
 	}
 	graph[bd.Name] = deps
 
