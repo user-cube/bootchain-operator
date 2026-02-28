@@ -55,6 +55,7 @@ type BootDependencyReconciler struct {
 
 func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
+	start := time.Now()
 
 	var bd corev1alpha1.BootDependency
 	if err := r.Get(ctx, req.NamespacedName, &bd); err != nil {
@@ -79,6 +80,9 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		resolved++
 		log.Info("Dependency reachable", "service", dep.Service, "port", dep.Port)
 	}
+
+	dependenciesTotal.WithLabelValues(req.Namespace, req.Name).Set(float64(total))
+	dependenciesReady.WithLabelValues(req.Namespace, req.Name).Set(float64(resolved))
 
 	patch := client.MergeFrom(bd.DeepCopy())
 	bd.Status.ResolvedDependencies = fmt.Sprintf("%d/%d", resolved, total)
@@ -105,8 +109,13 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	if err := r.Status().Patch(ctx, &bd, patch); err != nil {
 		log.Error(err, "Failed to patch status")
+		reconcileTotal.WithLabelValues("error").Inc()
+		reconcileDuration.WithLabelValues("error").Observe(time.Since(start).Seconds())
 		return ctrl.Result{}, err
 	}
+
+	reconcileTotal.WithLabelValues("success").Inc()
+	reconcileDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 
 	if allReady {
 		r.Recorder.Eventf(&bd, corev1.EventTypeNormal, "AllDependenciesReady",

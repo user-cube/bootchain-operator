@@ -75,6 +75,13 @@ metrics:
   service:
     type: ClusterIP
     annotations: {}
+  # ServiceMonitor for Prometheus Operator scraping.
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    # Extra labels to add to the ServiceMonitor (e.g. to match a Prometheus instance selector).
+    additionalLabels: {}
 
 ## @section Webhooks
 webhook:
