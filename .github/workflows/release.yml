@@ -68,7 +68,6 @@ jobs:
     uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
     with:
       python-version: "3.13"
-      mkdocs-packages: "mkdocs-material pymdownx"
       docs-subdir: docs
       pages-branch: gh-pages
     secrets:
@@ -80,8 +79,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.docs_only == 'true'
     uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
     with:
-      python-version: "3.13"
-      mkdocs-packages: "mkdocs-material pymdownx"
+      python-version: "3.x"
       docs-subdir: docs
       pages-branch: gh-pages
     secrets:
