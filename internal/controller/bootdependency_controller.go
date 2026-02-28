@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -68,12 +69,26 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	total := len(bd.Spec.DependsOn)
 	allReady := true
 
-	httpClient := &http.Client{Timeout: httpTimeout}
+	secureClient := &http.Client{Timeout: httpTimeout}
+	insecureClient := &http.Client{
+		Timeout: httpTimeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+		},
+	}
 	for _, dep := range bd.Spec.DependsOn {
 		label := depLabel(dep)
 		var checkErr error
 		if dep.HTTPPath != "" {
-			url := fmt.Sprintf("http://%s:%d%s", depLabel(dep), dep.Port, dep.HTTPPath)
+			scheme := dep.HTTPScheme
+			if scheme == "" {
+				scheme = "http"
+			}
+			url := fmt.Sprintf("%s://%s:%d%s", scheme, depLabel(dep), dep.Port, dep.HTTPPath)
+			httpClient := secureClient
+			if dep.Insecure {
+				httpClient = insecureClient
+			}
 			resp, err := httpClient.Get(url) //nolint:noctx
 			if err != nil {
 				checkErr = err

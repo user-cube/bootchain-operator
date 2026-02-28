@@ -27,7 +27,7 @@ The `BootDependencyReconciler` runs a reconciliation loop that:
 
 1. Fetches the `BootDependency` resource
 2. Probes each declared dependency (3-second timeout per check):
-   - If `httpPath` is set: performs an HTTP GET to `http://{target}:{port}{httpPath}` and requires a `2xx` response
+   - If `httpPath` is set: performs an HTTP(S) GET to `{httpScheme}://{target}:{port}{httpPath}` and requires a `2xx` response. The scheme defaults to `http`; set `httpScheme: https` for HTTPS. When `insecure: true`, TLS certificate verification is skipped (useful for self-signed certificates)
    - Otherwise: TCP-dials the address — `service` entries resolve as `{service}.{namespace}.svc.cluster.local:{port}`, `host` entries are dialled as `{host}:{port}`
 3. Updates `status.resolvedDependencies` (e.g. `"2/3"`) and the `Ready` condition
 4. Emits Kubernetes events for reachable/unreachable dependencies
@@ -47,6 +47,7 @@ The init containers use `busybox:1.36`. The polling command depends on whether `
 
 - **TCP check** (default): `timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'`
 - **HTTP check**: `timeout {timeout} sh -c 'until wget -q --spider http://{target}:{port}{httpPath}; do sleep 1; done'`
+- **HTTPS check** (`httpScheme: https`): same as HTTP but with `https://`. When `insecure: true`, `--no-check-certificate` is added to skip TLS verification
 
 ### Validating Webhook (`internal/webhook/v1alpha1`)
 

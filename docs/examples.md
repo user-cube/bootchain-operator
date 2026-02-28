@@ -156,6 +156,42 @@ spec:
 
 ---
 
+### HTTPS health check
+
+Use `httpScheme: https` together with `httpPath` to probe an HTTPS endpoint. By default TLS certificates are verified. Set `insecure: true` to skip verification (useful for services with self-signed certificates).
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  dependsOn:
+    - host: secure-api.example.com   # external HTTPS API — full TLS verification
+      port: 443
+      httpPath: /healthz
+      httpScheme: https
+      timeout: 60s
+    - service: internal-api          # in-cluster service with self-signed cert
+      port: 8443
+      httpPath: /ready
+      httpScheme: https
+      insecure: true                 # skip TLS verification
+      timeout: 30s
+    - service: postgres              # plain TCP check — no httpPath
+      port: 5432
+      timeout: 120s
+```
+
+!!! note
+    `insecure: true` only skips TLS certificate verification. The connection is still encrypted. Use it for services with self-signed or internal CA certificates that are not in the system trust store.
+
+!!! warning
+    Both `httpScheme` and `insecure` require `httpPath` to be set. The API server rejects resources that specify either field without `httpPath`.
+
+---
+
 ### Circular dependency (rejected)
 
 The validating webhook blocks cycles at admission time.

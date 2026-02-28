@@ -111,8 +111,11 @@ var _ = Describe("BootDependency Controller", func() {
 
 	Context("HTTP health check", func() {
 		// parseTestServer extracts host and port from an httptest.Server URL.
+		// Works for both http:// and https:// URLs.
 		parseTestServer := func(srv *httptest.Server) (string, int32) {
-			addr := strings.TrimPrefix(srv.URL, "http://")
+			addr := srv.URL
+			addr = strings.TrimPrefix(addr, "https://")
+			addr = strings.TrimPrefix(addr, "http://")
 			parts := strings.SplitN(addr, ":", 2)
 			Expect(parts).To(HaveLen(2))
 			p, err := strconv.Atoi(parts[1])
@@ -189,6 +192,45 @@ var _ = Describe("BootDependency Controller", func() {
 				{Host: host, Port: port, HTTPPath: "/ready"},
 			})
 			Expect(<-probed).To(Equal("/ready"))
+		})
+
+		It("should resolve an HTTPS dependency when insecure=true and server has a self-signed cert", func() {
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("https-insecure-ok", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: true},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
+
+		It("should not resolve an HTTPS dependency when insecure=false and server has a self-signed cert", func() {
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("https-secure-fail", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: false},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should not resolve an HTTPS dependency when the endpoint returns 5xx even with insecure=true", func() {
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("https-insecure-fail", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: true},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
 		})
 	})
 })

@@ -22,6 +22,8 @@ import (
 
 // ServiceDependency defines a single dependency that must be reachable before the owner can start.
 // Exactly one of `service` or `host` must be specified.
+// +kubebuilder:validation:XValidation:rule="!has(self.httpScheme) || has(self.httpPath)",message="httpScheme requires httpPath to be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.insecure) || !self.insecure || has(self.httpPath)",message="insecure requires httpPath to be set"
 type ServiceDependency struct {
 	// service is the name of a Kubernetes Service in the same namespace to wait for.
 	// Mutually exclusive with host.
@@ -41,13 +43,27 @@ type ServiceDependency struct {
 	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
 
-	// httpPath is an optional HTTP path to probe instead of a raw TCP check.
-	// When set, the init container performs an HTTP GET to http://{target}:{port}{httpPath}
-	// and waits until a 2xx response is received.
+	// httpPath is an optional HTTP(S) path to probe instead of a raw TCP check.
+	// When set, the controller and init container perform an HTTP GET to
+	// {httpScheme}://{target}:{port}{httpPath} and wait until a 2xx response is received.
 	// When omitted, a plain TCP connection check is used.
 	// +kubebuilder:validation:Pattern=`^/.*`
 	// +optional
 	HTTPPath string `json:"httpPath,omitempty"`
+
+	// httpScheme is the URL scheme to use when httpPath is set.
+	// Must be "http" or "https". Defaults to "http" when omitted.
+	// Only meaningful when httpPath is set.
+	// +kubebuilder:validation:Enum=http;https
+	// +optional
+	HTTPScheme string `json:"httpScheme,omitempty"`
+
+	// insecure controls whether TLS certificate verification is skipped for HTTPS probes.
+	// When true, the controller and init container accept any certificate, including
+	// self-signed ones. Only meaningful when httpScheme is "https".
+	// Defaults to false.
+	// +optional
+	Insecure bool `json:"insecure,omitempty"`
 
 	// timeout is how long to wait for this dependency before giving up.
 	// Defaults to 60s if not specified.

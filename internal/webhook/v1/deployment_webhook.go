@@ -109,7 +109,7 @@ func depTarget(dep corev1alpha1.ServiceDependency) string {
 }
 
 // buildWaitContainer creates a busybox init container that polls the given
-// host:port until it is reachable. When httpPath is set, an HTTP GET is used
+// host:port until it is reachable. When httpPath is set, an HTTP(S) GET is used
 // instead of a raw TCP check.
 func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.Container {
 	timeout := dep.Timeout
@@ -121,13 +121,22 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 
 	var script string
 	if dep.HTTPPath != "" {
-		url := fmt.Sprintf("http://%s:%d%s", target, dep.Port, dep.HTTPPath)
+		scheme := dep.HTTPScheme
+		if scheme == "" {
+			scheme = "http"
+		}
+		url := fmt.Sprintf("%s://%s:%d%s", scheme, target, dep.Port, dep.HTTPPath)
 		// wget -q --spider exits 0 on any 2xx/3xx response.
+		// --no-check-certificate skips TLS verification for self-signed certs.
+		wgetFlags := "-q --spider"
+		if dep.Insecure {
+			wgetFlags += " --no-check-certificate"
+		}
 		script = fmt.Sprintf(
 			"echo 'Waiting for %s...'; "+
-				"timeout %s sh -c 'until wget -q --spider %s; do sleep 1; done'; "+
+				"timeout %s sh -c 'until wget %s %s; do sleep 1; done'; "+
 				"echo '%s is ready'",
-			url, timeout, url, url,
+			url, timeout, wgetFlags, url, url,
 		)
 	} else {
 		script = fmt.Sprintf(

@@ -97,6 +97,7 @@ var _ = Describe("buildWaitContainer", func() {
 			Expect(script).To(ContainSubstring("wget -q --spider http://api:8080/healthz"))
 			Expect(script).To(ContainSubstring("timeout 45s"))
 			Expect(script).NotTo(ContainSubstring("nc -z"))
+			Expect(script).NotTo(ContainSubstring("--no-check-certificate"))
 		})
 
 		It("should generate a wget-based script for an external host dep", func() {
@@ -109,6 +110,49 @@ var _ = Describe("buildWaitContainer", func() {
 			script := c.Command[len(c.Command)-1]
 			Expect(script).To(ContainSubstring("wget -q --spider http://db.example.com:5432/health"))
 			Expect(strings.Count(script, "http://db.example.com:5432/health")).To(Equal(3))
+		})
+	})
+
+	Context("HTTPS dependency (httpScheme=https)", func() {
+		It("should use https scheme and no --no-check-certificate when insecure is false", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:    "secure-api",
+				Port:       443,
+				HTTPPath:   "/healthz",
+				HTTPScheme: "https",
+			}
+			c := buildWaitContainer("wait-for-secure-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("wget -q --spider https://secure-api:443/healthz"))
+			Expect(script).NotTo(ContainSubstring("--no-check-certificate"))
+			Expect(script).NotTo(ContainSubstring("http://"))
+		})
+
+		It("should add --no-check-certificate when insecure is true", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:    "self-signed-api",
+				Port:       8443,
+				HTTPPath:   "/ready",
+				HTTPScheme: "https",
+				Insecure:   true,
+			}
+			c := buildWaitContainer("wait-for-self-signed-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("wget -q --spider --no-check-certificate https://self-signed-api:8443/ready"))
+		})
+
+		It("should support https with an external host", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Host:       "api.example.com",
+				Port:       443,
+				HTTPPath:   "/health",
+				HTTPScheme: "https",
+				Insecure:   true,
+			}
+			c := buildWaitContainer("wait-for-api.example.com", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("wget -q --spider --no-check-certificate https://api.example.com:443/health"))
+			Expect(strings.Count(script, "https://api.example.com:443/health")).To(Equal(3))
 		})
 	})
 })

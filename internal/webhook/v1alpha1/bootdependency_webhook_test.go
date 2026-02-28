@@ -99,6 +99,68 @@ var _ = Describe("BootDependency Webhook", func() {
 		})
 	})
 
+	Context("When creating a BootDependency with valid HTTPS configuration", func() {
+		It("should allow creation with httpScheme and httpPath set together", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-https-valid", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Host: "api.example.com", Port: 443, HTTPPath: "/healthz", HTTPScheme: "https"},
+					},
+				},
+			}
+			validator := &BootDependencyCustomValidator{Client: k8sClient}
+			warnings, err := validator.ValidateCreate(ctx, bd)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("should allow creation with insecure=true when httpPath is also set", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-https-insecure-valid", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Host: "api.example.com", Port: 443, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: true},
+					},
+				},
+			}
+			validator := &BootDependencyCustomValidator{Client: k8sClient}
+			warnings, err := validator.ValidateCreate(ctx, bd)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+	})
+
+	Context("CEL validation: httpScheme and insecure require httpPath", func() {
+		It("should reject httpScheme set without httpPath (via API server)", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-scheme-no-path", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Service: "api", Port: 8080, HTTPScheme: "https"},
+					},
+				},
+			}
+			err := k8sClient.Create(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("httpScheme requires httpPath to be set"))
+		})
+
+		It("should reject insecure=true without httpPath (via API server)", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-insecure-no-path", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Service: "api", Port: 8080, Insecure: true},
+					},
+				},
+			}
+			err := k8sClient.Create(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("insecure requires httpPath to be set"))
+		})
+	})
+
 	Context("When creating a BootDependency that introduces a circular dependency", func() {
 		BeforeEach(func() {
 			bdB := &corev1alpha1.BootDependency{

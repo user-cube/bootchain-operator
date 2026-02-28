@@ -64,12 +64,28 @@ spec:
                       type: string
                     httpPath:
                       description: |-
-                        httpPath is an optional HTTP path to probe instead of a raw TCP check.
-                        When set, the init container performs an HTTP GET to http://{target}:{port}{httpPath}
-                        and waits until a 2xx response is received.
+                        httpPath is an optional HTTP(S) path to probe instead of a raw TCP check.
+                        When set, the controller and init container perform an HTTP GET to
+                        {httpScheme}://{target}:{port}{httpPath} and wait until a 2xx response is received.
                         When omitted, a plain TCP connection check is used.
                       pattern: ^/.*
                       type: string
+                    httpScheme:
+                      description: |-
+                        httpScheme is the URL scheme to use when httpPath is set.
+                        Must be "http" or "https". Defaults to "http" when omitted.
+                        Only meaningful when httpPath is set.
+                      enum:
+                      - http
+                      - https
+                      type: string
+                    insecure:
+                      description: |-
+                        insecure controls whether TLS certificate verification is skipped for HTTPS probes.
+                        When true, the controller and init container accept any certificate, including
+                        self-signed ones. Only meaningful when httpScheme is "https".
+                        Defaults to false.
+                      type: boolean
                     port:
                       description: port is the TCP port that must be open on the dependency.
                       format: int32
@@ -95,6 +111,10 @@ spec:
                   - message: exactly one of service or host must be specified
                     rule: (has(self.service) && self.service != '') != (has(self.host)
                       && self.host != '')
+                  - message: httpScheme requires httpPath to be set
+                    rule: '!has(self.httpScheme) || has(self.httpPath)'
+                  - message: insecure requires httpPath to be set
+                    rule: '!has(self.insecure) || !self.insecure || has(self.httpPath)'
                 minItems: 1
                 type: array
             required:

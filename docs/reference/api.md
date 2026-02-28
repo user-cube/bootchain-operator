@@ -6,7 +6,7 @@
 **Version:** `v1alpha1`
 **Scope:** Namespaced
 
-A `BootDependency` declares the set of services that must be reachable before a `Deployment` with the same name (in the same namespace) is allowed to start. The operator injects `wait-for-*` init containers automatically. Each dependency can be probed via a raw TCP check or an HTTP health endpoint.
+A `BootDependency` declares the set of services that must be reachable before a `Deployment` with the same name (in the same namespace) is allowed to start. The operator injects `wait-for-*` init containers automatically. Each dependency can be probed via a raw TCP check, an HTTP health endpoint, or an HTTPS health endpoint.
 
 ### Spec
 
@@ -15,12 +15,16 @@ spec:
   dependsOn:
     - service: <string>        # exactly one of service or host is required
       port: <integer>          # required
-      httpPath: <string>       # optional, enables HTTP check (e.g. /healthz)
+      httpPath: <string>       # optional, enables HTTP(S) check (e.g. /healthz)
+      httpScheme: <string>     # optional, "http" or "https" (default: "http")
+      insecure: <boolean>      # optional, skip TLS verification (default: false)
       timeout: <string>        # optional, default: "60s"
 
     - host: <string>           # use for external dependencies (DNS / IP)
       port: <integer>
       httpPath: <string>       # optional
+      httpScheme: <string>     # optional
+      insecure: <boolean>      # optional
       timeout: <string>
 ```
 
@@ -33,7 +37,9 @@ List of dependencies. At least one entry is required. Each entry must specify **
 | `service` | string | one of `service`/`host` | Name of the Kubernetes `Service` in the same namespace to wait for |
 | `host` | string | one of `service`/`host` | External hostname or IP address to wait for (e.g. a managed database, an external API) |
 | `port` | integer (1–65535) | yes | TCP port to probe |
-| `httpPath` | string | no | HTTP path to probe instead of a raw TCP check (e.g. `/healthz`). Must start with `/`. When set, the check performs an HTTP GET and requires a `2xx` response. When omitted, a plain TCP connection check is used |
+| `httpPath` | string | no | HTTP(S) path to probe instead of a raw TCP check (e.g. `/healthz`). Must start with `/`. When set, the check performs an HTTP GET and requires a `2xx` response. When omitted, a plain TCP connection check is used |
+| `httpScheme` | `http` \| `https` | no | URL scheme to use when `httpPath` is set. Defaults to `http`. Requires `httpPath` to be set |
+| `insecure` | boolean | no | When `true`, TLS certificate verification is skipped for HTTPS probes (accepts self-signed certificates). Defaults to `false`. Requires `httpPath` to be set |
 | `timeout` | duration string | no | How long to wait per dependency. Defaults to `60s` |
 
 ### Status
@@ -125,6 +131,29 @@ spec:
       timeout: 60s
 ```
 
+HTTPS health check (with TLS certificate verification):
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - host: secure-api.example.com   # external HTTPS API
+      port: 443
+      httpPath: /healthz
+      httpScheme: https
+      timeout: 60s
+    - service: internal-https-svc    # in-cluster service with self-signed cert
+      port: 8443
+      httpPath: /ready
+      httpScheme: https
+      insecure: true                 # skip TLS verification
+      timeout: 30s
+```
+
 ### Naming convention
 
 The `BootDependency` name must match the `Deployment` name it targets. The operator looks up a `BootDependency` whose `metadata.name` equals the Deployment's `metadata.name` in the same namespace.
@@ -162,5 +191,20 @@ initContainers:
   - -c
   - "echo 'Waiting for http://auth-service:8080/healthz...'; timeout 30s sh -c 'until wget -q --spider http://auth-service:8080/healthz; do sleep 1; done'; echo 'http://auth-service:8080/healthz is ready'"
 ```
+
+**HTTPS check** (when `httpPath` and `httpScheme: https` are set):
+
+```yaml
+initContainers:
+- name: wait-for-secure-api
+  image: busybox:1.36
+  imagePullPolicy: IfNotPresent
+  command:
+  - sh
+  - -c
+  - "echo 'Waiting for https://secure-api:443/healthz...'; timeout 60s sh -c 'until wget -q --spider https://secure-api:443/healthz; do sleep 1; done'; echo 'https://secure-api:443/healthz is ready'"
+```
+
+With `insecure: true`, `--no-check-certificate` is added to the `wget` command to skip TLS verification.
 
 Init containers are injected idempotently — re-applying a Deployment will not duplicate them.
