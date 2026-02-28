@@ -109,7 +109,8 @@ func depTarget(dep corev1alpha1.ServiceDependency) string {
 }
 
 // buildWaitContainer creates a busybox init container that polls the given
-// host:port via netcat until it is reachable.
+// host:port until it is reachable. When httpPath is set, an HTTP GET is used
+// instead of a raw TCP check.
 func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.Container {
 	timeout := dep.Timeout
 	if timeout == "" {
@@ -118,17 +119,27 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 
 	target := depTarget(dep)
 
-	// The script polls the target every second until it is reachable.
-	// `timeout` wraps the loop so the init container does not block forever.
-	script := fmt.Sprintf(
-		"echo 'Waiting for %s:%d...'; "+
-			"timeout %s sh -c 'until nc -z %s %d; do sleep 1; done'; "+
-			"echo '%s:%d is ready'",
-		target, dep.Port,
-		timeout,
-		target, dep.Port,
-		target, dep.Port,
-	)
+	var script string
+	if dep.HTTPPath != "" {
+		url := fmt.Sprintf("http://%s:%d%s", target, dep.Port, dep.HTTPPath)
+		// wget -q --spider exits 0 on any 2xx/3xx response.
+		script = fmt.Sprintf(
+			"echo 'Waiting for %s...'; "+
+				"timeout %s sh -c 'until wget -q --spider %s; do sleep 1; done'; "+
+				"echo '%s is ready'",
+			url, timeout, url, url,
+		)
+	} else {
+		script = fmt.Sprintf(
+			"echo 'Waiting for %s:%d...'; "+
+				"timeout %s sh -c 'until nc -z %s %d; do sleep 1; done'; "+
+				"echo '%s:%d is ready'",
+			target, dep.Port,
+			timeout,
+			target, dep.Port,
+			target, dep.Port,
+		)
+	}
 
 	return corev1.Container{
 		Name:            name,

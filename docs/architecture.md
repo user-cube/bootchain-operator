@@ -14,7 +14,7 @@ bootchain-operator is a Kubernetes operator built with [Kubebuilder](https://boo
 │   Controller    │    │         Webhook Server          │
 │                 │    │                                 │
 │  Reconcile loop │    │  MutatingWebhook  (Deployment)  │
-│  TCP dial check │    │  ValidatingWebhook (BootDep)    │
+│  TCP/HTTP check │    │  ValidatingWebhook (BootDep)    │
 │  Status update  │    │                                 │
 └─────────────────┘    └─────────────────────────────────┘
 ```
@@ -26,9 +26,9 @@ bootchain-operator is a Kubernetes operator built with [Kubebuilder](https://boo
 The `BootDependencyReconciler` runs a reconciliation loop that:
 
 1. Fetches the `BootDependency` resource
-2. TCP-dials each declared dependency with a 3-second timeout:
-   - `service` entries are resolved as `{service}.{namespace}.svc.cluster.local:{port}`
-   - `host` entries are dialled directly as `{host}:{port}`
+2. Probes each declared dependency (3-second timeout per check):
+   - If `httpPath` is set: performs an HTTP GET to `http://{target}:{port}{httpPath}` and requires a `2xx` response
+   - Otherwise: TCP-dials the address — `service` entries resolve as `{service}.{namespace}.svc.cluster.local:{port}`, `host` entries are dialled as `{host}:{port}`
 3. Updates `status.resolvedDependencies` (e.g. `"2/3"`) and the `Ready` condition
 4. Emits Kubernetes events for reachable/unreachable dependencies
 5. Records Prometheus metrics
@@ -43,10 +43,10 @@ The `DeploymentCustomDefaulter` fires on `CREATE` and `UPDATE` of any `apps/v1 D
 3. The init container target is the `service` name (cluster DNS) or `host` value (used directly)
 4. Injection is **idempotent** — existing init containers with the same name are skipped
 
-The init containers use `busybox:1.36` and run:
-```sh
-timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'
-```
+The init containers use `busybox:1.36`. The polling command depends on whether `httpPath` is set:
+
+- **TCP check** (default): `timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'`
+- **HTTP check**: `timeout {timeout} sh -c 'until wget -q --spider http://{target}:{port}{httpPath}; do sleep 1; done'`
 
 ### Validating Webhook (`internal/webhook/v1alpha1`)
 

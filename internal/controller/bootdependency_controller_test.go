@@ -18,6 +18,10 @@ package controller
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -102,6 +106,89 @@ var _ = Describe("BootDependency Controller", func() {
 			updated := &corev1alpha1.BootDependency{}
 			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
 			Expect(updated.Status.ResolvedDependencies).To(MatchRegexp(`^\d+/\d+$`))
+		})
+	})
+
+	Context("HTTP health check", func() {
+		// parseTestServer extracts host and port from an httptest.Server URL.
+		parseTestServer := func(srv *httptest.Server) (string, int32) {
+			addr := strings.TrimPrefix(srv.URL, "http://")
+			parts := strings.SplitN(addr, ":", 2)
+			Expect(parts).To(HaveLen(2))
+			p, err := strconv.Atoi(parts[1])
+			Expect(err).NotTo(HaveOccurred())
+			return parts[0], int32(p)
+		}
+
+		createAndReconcile := func(resName string, deps []corev1alpha1.ServiceDependency) *corev1alpha1.BootDependency {
+			nn := types.NamespacedName{Name: resName, Namespace: "default"}
+			resource := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: resName, Namespace: "default"},
+				Spec:       corev1alpha1.BootDependencySpec{DependsOn: deps},
+			}
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			DeferCleanup(func() {
+				r := &corev1alpha1.BootDependency{}
+				if err := k8sClient.Get(ctx, nn, r); err == nil {
+					_ = k8sClient.Delete(ctx, r)
+				}
+			})
+
+			reconciler := &BootDependencyReconciler{
+				Client:   k8sClient,
+				Scheme:   k8sClient.Scheme(),
+				Recorder: record.NewFakeRecorder(10),
+			}
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			updated := &corev1alpha1.BootDependency{}
+			Expect(k8sClient.Get(ctx, nn, updated)).To(Succeed())
+			return updated
+		}
+
+		It("should count an HTTP dependency as resolved when the endpoint returns 2xx", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-ok-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz"},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
+
+		It("should count an HTTP dependency as not resolved when the endpoint returns 5xx", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-fail-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz"},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should use the correct HTTP path when probing", func() {
+			probed := make(chan string, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				select {
+				case probed <- r.URL.Path:
+				default:
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			_ = createAndReconcile("http-path-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/ready"},
+			})
+			Expect(<-probed).To(Equal("/ready"))
 		})
 	})
 })

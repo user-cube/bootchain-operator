@@ -65,6 +65,14 @@ spec:
                         Mutually exclusive with service.
                       minLength: 1
                       type: string
+                    httpPath:
+                      description: |-
+                        httpPath is an optional HTTP path to probe instead of a raw TCP check.
+                        When set, the init container performs an HTTP GET to http://{target}:{port}{httpPath}
+                        and waits until a 2xx response is received.
+                        When omitted, a plain TCP connection check is used.
+                      pattern: ^/.*
+                      type: string
                     port:
                       description: port is the TCP port that must be open on the dependency.
                       format: int32

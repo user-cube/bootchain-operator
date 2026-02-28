@@ -41,6 +41,14 @@ type ServiceDependency struct {
 	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
 
+	// httpPath is an optional HTTP path to probe instead of a raw TCP check.
+	// When set, the init container performs an HTTP GET to http://{target}:{port}{httpPath}
+	// and waits until a 2xx response is received.
+	// When omitted, a plain TCP connection check is used.
+	// +kubebuilder:validation:Pattern=`^/.*`
+	// +optional
+	HTTPPath string `json:"httpPath,omitempty"`
+
 	// timeout is how long to wait for this dependency before giving up.
 	// Defaults to 60s if not specified.
 	// +kubebuilder:default="60s"

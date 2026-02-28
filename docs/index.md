@@ -43,7 +43,8 @@ The operator automatically injects the correct init containers into any `Deploym
 - **Automatic init container injection** — a mutating webhook injects `wait-for-*` init containers into matching Deployments
 - **In-cluster and external dependencies** — use `service` for Kubernetes Services in the same namespace, or `host` for external hostnames and IP addresses
 - **Circular dependency detection** — a validating webhook blocks any `BootDependency` that would create a dependency cycle
-- **Status tracking** — the controller continuously checks TCP reachability and updates `status.resolvedDependencies` (e.g. `2/3`) and `status.conditions`
+- **TCP and HTTP health checks** — probe dependencies with a raw TCP connection or an HTTP GET to a specific path (e.g. `/healthz`), requiring a `2xx` response
+- **Status tracking** — the controller continuously probes each dependency and updates `status.resolvedDependencies` (e.g. `2/3`) and `status.conditions`
 - **Prometheus metrics** — exposes reconciliation counters, duration histograms, and per-resource dependency gauges
 - **Helm chart** — production-ready chart with cert-manager TLS, leader election, and optional ServiceMonitor
 

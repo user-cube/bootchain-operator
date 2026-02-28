@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -39,6 +40,7 @@ const (
 	requeueAfterReady    = 30 * time.Second
 	requeueAfterNotReady = 10 * time.Second
 	dialTimeout          = 3 * time.Second
+	httpTimeout          = 3 * time.Second
 )
 
 // BootDependencyReconciler reconciles a BootDependency object
@@ -66,18 +68,38 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	total := len(bd.Spec.DependsOn)
 	allReady := true
 
+	httpClient := &http.Client{Timeout: httpTimeout}
 	for _, dep := range bd.Spec.DependsOn {
-		addr := depAddress(dep, req.Namespace)
 		label := depLabel(dep)
-		conn, err := net.DialTimeout("tcp", addr, dialTimeout)
-		if err != nil {
-			log.Info("Dependency not reachable", "dependency", label, "port", dep.Port, "error", err)
+		var checkErr error
+		if dep.HTTPPath != "" {
+			url := fmt.Sprintf("http://%s:%d%s", depLabel(dep), dep.Port, dep.HTTPPath)
+			resp, err := httpClient.Get(url) //nolint:noctx
+			if err != nil {
+				checkErr = err
+			} else {
+				_ = resp.Body.Close()
+				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+					checkErr = fmt.Errorf("HTTP %d", resp.StatusCode)
+				}
+			}
+		} else {
+			addr := depAddress(dep, req.Namespace)
+			conn, err := net.DialTimeout("tcp", addr, dialTimeout)
+			if err != nil {
+				checkErr = err
+			} else {
+				_ = conn.Close()
+			}
+		}
+
+		if checkErr != nil {
+			log.Info("Dependency not reachable", "dependency", label, "port", dep.Port, "error", checkErr)
 			r.Recorder.Eventf(&bd, corev1.EventTypeWarning, "DependencyNotReady",
 				"Dependency %s:%d is not reachable", label, dep.Port)
 			allReady = false
 			continue
 		}
-		_ = conn.Close()
 		resolved++
 		log.Info("Dependency reachable", "dependency", label, "port", dep.Port)
 	}

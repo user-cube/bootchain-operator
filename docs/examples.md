@@ -127,6 +127,35 @@ spec:
 
 ---
 
+### HTTP health check
+
+Use `httpPath` to probe an HTTP endpoint instead of doing a raw TCP connection. The check performs an HTTP GET and requires a `2xx` response before the init container exits. This is useful when a service binds its port before it is fully initialised and exposes a dedicated health endpoint.
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  dependsOn:
+    - service: backend
+      port: 8080
+      httpPath: /healthz       # waits for HTTP 200 on http://backend:8080/healthz
+      timeout: 60s
+    - host: api.example.com    # external API with a health endpoint
+      port: 443
+      httpPath: /health
+      timeout: 30s
+    - service: postgres
+      port: 5432               # no httpPath → plain TCP check
+      timeout: 120s
+```
+
+`service` and `host` entries can freely mix TCP and HTTP checks within the same `BootDependency`.
+
+---
+
 ### Circular dependency (rejected)
 
 The validating webhook blocks cycles at admission time.
