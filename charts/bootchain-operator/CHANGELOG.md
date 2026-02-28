@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/user-cube/bootchain-operator/compare/v1.0.2...v1.0.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* direct dependencies ([8e2491f](https://github.com/user-cube/bootchain-operator/commit/8e2491f3d260ca9c4052065f190cfbedbdb279c4))
+
 ## [1.0.2](https://github.com/user-cube/bootchain-operator/compare/v1.0.1...v1.0.2) (2026-02-28)
 
 
