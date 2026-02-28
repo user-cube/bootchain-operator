@@ -35,7 +35,7 @@ NAME           READY   RESOLVED   AGE
 payments-api   False   0/2        5s
 ```
 
-The `READY` column reflects TCP reachability. `0/2` means neither dependency is reachable yet — the services don't exist. That's expected.
+The `READY` column reflects reachability. `0/2` means neither dependency is reachable yet — the services don't exist. That's expected.
 
 ## 2. Deploy the application
 
@@ -107,7 +107,86 @@ spec:
 
 The init container for the `host` entry dials `db.example.com:5432` directly (no cluster DNS suffix). `service` and `host` entries can be mixed freely.
 
-## 5. Circular dependency detection
+## 5. HTTP health check
+
+Use `httpPath` to probe an HTTP endpoint instead of a raw TCP connection. Useful when a service binds its port before it is fully ready and exposes a `/healthz` or `/ready` endpoint:
+
+```yaml title="payments-api-deps-http.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - service: auth-service
+      port: 8080
+      httpPath: /healthz      # HTTP GET — waits for 2xx
+      timeout: 30s
+```
+
+The injected init container for `auth-service` will use `wget --spider` instead of `nc -z`, and only exit once it receives a `2xx` response.
+
+## 6. Advanced HTTP check (custom method, headers, status codes)
+
+Use `httpMethod`, `httpHeaders`, and `httpExpectedStatuses` when the default `GET`/`2xx` probe is not sufficient:
+
+```yaml title="payments-api-deps-advanced.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - service: auth-service
+      port: 8080
+      httpPath: /healthz
+      httpMethod: POST                   # probe with POST instead of GET
+      httpHeaders:
+        - name: Authorization
+          value: Bearer bootstrap-token  # endpoint requires auth
+      httpExpectedStatuses: [200, 204]   # accept 200 or 204
+      timeout: 30s
+```
+
+When any of these fields are set, the init container uses `curl` (instead of `wget`) to support custom methods, headers, and precise status code matching.
+
+## 7. HTTPS health check
+
+Add `httpScheme: https` to probe an HTTPS endpoint. Certificate verification is on by default — set `insecure: true` to accept self-signed certificates:
+
+```yaml title="payments-api-deps-https.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - host: secure-api.example.com   # external HTTPS API
+      port: 443
+      httpPath: /healthz
+      httpScheme: https              # use HTTPS instead of HTTP
+      timeout: 30s
+    - service: internal-svc          # in-cluster service with self-signed cert
+      port: 8443
+      httpPath: /ready
+      httpScheme: https
+      insecure: true                 # skip TLS certificate verification
+      timeout: 30s
+```
+
+## 8. Circular dependency detection
 
 The validating webhook blocks dependency cycles. Try creating a cycle:
 
@@ -153,7 +232,7 @@ The cycle is blocked with a clear error message.
 
 ## Next steps
 
-- See more patterns (fan-in, chains, external hosts) in the [Examples](../examples.md)
+- See more patterns (fan-in, chains, external hosts, HTTP/HTTPS/advanced checks) in the [Examples](../examples.md)
 - Learn about all available fields in the [API Reference](../reference/api.md)
 - Configure the Helm chart with [Helm Values](../reference/helm-values.md)
 - Monitor the operator with [Metrics](../reference/metrics.md)

@@ -18,8 +18,11 @@ package controller
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
+	"slices"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -39,6 +42,7 @@ const (
 	requeueAfterReady    = 30 * time.Second
 	requeueAfterNotReady = 10 * time.Second
 	dialTimeout          = 3 * time.Second
+	httpTimeout          = 3 * time.Second
 )
 
 // BootDependencyReconciler reconciles a BootDependency object
@@ -66,18 +70,64 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	total := len(bd.Spec.DependsOn)
 	allReady := true
 
+	secureClient := &http.Client{Timeout: httpTimeout}
+	insecureClient := &http.Client{
+		Timeout: httpTimeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+		},
+	}
 	for _, dep := range bd.Spec.DependsOn {
-		addr := depAddress(dep, req.Namespace)
 		label := depLabel(dep)
-		conn, err := net.DialTimeout("tcp", addr, dialTimeout)
-		if err != nil {
-			log.Info("Dependency not reachable", "dependency", label, "port", dep.Port, "error", err)
+		var checkErr error
+		if dep.HTTPPath != "" {
+			scheme := dep.HTTPScheme
+			if scheme == "" {
+				scheme = "http"
+			}
+			url := fmt.Sprintf("%s://%s:%d%s", scheme, depLabel(dep), dep.Port, dep.HTTPPath)
+			httpClient := secureClient
+			if dep.Insecure {
+				httpClient = insecureClient
+			}
+			method := dep.HTTPMethod
+			if method == "" {
+				method = http.MethodGet
+			}
+			req, reqErr := http.NewRequest(method, url, nil) //nolint:noctx
+			if reqErr != nil {
+				checkErr = reqErr
+			} else {
+				for _, h := range dep.HTTPHeaders {
+					req.Header.Set(h.Name, h.Value)
+				}
+				resp, err := httpClient.Do(req)
+				if err != nil {
+					checkErr = err
+				} else {
+					_ = resp.Body.Close()
+					if !statusAccepted(resp.StatusCode, dep.HTTPExpectedStatuses) {
+						checkErr = fmt.Errorf("HTTP %d", resp.StatusCode)
+					}
+				}
+			}
+		} else {
+			addr := depAddress(dep, req.Namespace)
+			conn, err := net.DialTimeout("tcp", addr, dialTimeout)
+			if err != nil {
+				checkErr = err
+			} else {
+				_ = conn.Close()
+			}
+		}
+
+		if checkErr != nil {
+			log.Info("Dependency not reachable", "dependency", label, "port", dep.Port, "error", checkErr)
 			r.Recorder.Eventf(&bd, corev1.EventTypeWarning, "DependencyNotReady",
 				"Dependency %s:%d is not reachable", label, dep.Port)
 			allReady = false
 			continue
 		}
-		_ = conn.Close()
 		resolved++
 		log.Info("Dependency reachable", "dependency", label, "port", dep.Port)
 	}
@@ -134,6 +184,15 @@ func depAddress(dep corev1alpha1.ServiceDependency, namespace string) string {
 		return fmt.Sprintf("%s:%d", dep.Host, dep.Port)
 	}
 	return fmt.Sprintf("%s.%s.svc.cluster.local:%d", dep.Service, namespace, dep.Port)
+}
+
+// statusAccepted returns true when code is in the accepted list.
+// When the list is empty it falls back to the 2xx range (200–299).
+func statusAccepted(code int, accepted []int32) bool {
+	if len(accepted) == 0 {
+		return code >= 200 && code < 300
+	}
+	return slices.Contains(accepted, int32(code))
 }
 
 // depLabel returns a human-readable identifier for a dependency (for logs and events).

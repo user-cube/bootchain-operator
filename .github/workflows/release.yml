@@ -48,6 +48,19 @@ jobs:
     permissions:
       contents: read
       packages: write
+  
+  docker-minimal-tools:
+    name: Build and Push Minimal Tools Docker Image
+    needs: release
+    if: needs.release.outputs.new-release == 'true'
+    uses: AutomationDojo/reusable-cicd/.github/workflows/docker-build-push.yml@main
+    with:
+      version: ${{ needs.release.outputs.version }}
+      dockerfile: "Dockerfile.tools"
+      image-name: "minimal-tools"
+    permissions:
+      contents: read
+      packages: write
 
   publish:
     name: Publish Helm Chart

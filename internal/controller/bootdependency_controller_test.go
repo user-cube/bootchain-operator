@@ -18,6 +18,10 @@ package controller
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -102,6 +106,213 @@ var _ = Describe("BootDependency Controller", func() {
 			updated := &corev1alpha1.BootDependency{}
 			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
 			Expect(updated.Status.ResolvedDependencies).To(MatchRegexp(`^\d+/\d+$`))
+		})
+	})
+
+	Context("HTTP health check", func() {
+		// parseTestServer extracts host and port from an httptest.Server URL.
+		// Works for both http:// and https:// URLs.
+		parseTestServer := func(srv *httptest.Server) (string, int32) {
+			addr := srv.URL
+			addr = strings.TrimPrefix(addr, "https://")
+			addr = strings.TrimPrefix(addr, "http://")
+			parts := strings.SplitN(addr, ":", 2)
+			Expect(parts).To(HaveLen(2))
+			p, err := strconv.Atoi(parts[1])
+			Expect(err).NotTo(HaveOccurred())
+			return parts[0], int32(p)
+		}
+
+		createAndReconcile := func(resName string, deps []corev1alpha1.ServiceDependency) *corev1alpha1.BootDependency {
+			nn := types.NamespacedName{Name: resName, Namespace: "default"}
+			resource := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: resName, Namespace: "default"},
+				Spec:       corev1alpha1.BootDependencySpec{DependsOn: deps},
+			}
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			DeferCleanup(func() {
+				r := &corev1alpha1.BootDependency{}
+				if err := k8sClient.Get(ctx, nn, r); err == nil {
+					_ = k8sClient.Delete(ctx, r)
+				}
+			})
+
+			reconciler := &BootDependencyReconciler{
+				Client:   k8sClient,
+				Scheme:   k8sClient.Scheme(),
+				Recorder: record.NewFakeRecorder(10),
+			}
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			updated := &corev1alpha1.BootDependency{}
+			Expect(k8sClient.Get(ctx, nn, updated)).To(Succeed())
+			return updated
+		}
+
+		It("should count an HTTP dependency as resolved when the endpoint returns 2xx", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-ok-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz"},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
+
+		It("should count an HTTP dependency as not resolved when the endpoint returns 5xx", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-fail-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz"},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should use the correct HTTP path when probing", func() {
+			probed := make(chan string, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				select {
+				case probed <- r.URL.Path:
+				default:
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			_ = createAndReconcile("http-path-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/ready"},
+			})
+			Expect(<-probed).To(Equal("/ready"))
+		})
+
+		It("should resolve an HTTPS dependency when insecure=true and server has a self-signed cert", func() {
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("https-insecure-ok", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: true},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
+
+		It("should not resolve an HTTPS dependency when insecure=false and server has a self-signed cert", func() {
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("https-secure-fail", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: false},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should not resolve an HTTPS dependency when the endpoint returns 5xx even with insecure=true", func() {
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("https-insecure-fail", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPScheme: "https", Insecure: true},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should use the specified HTTP method when probing", func() {
+			capturedMethod := make(chan string, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				select {
+				case capturedMethod <- r.Method:
+				default:
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			_ = createAndReconcile("http-method-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPMethod: "POST"},
+			})
+			Expect(<-capturedMethod).To(Equal("POST"))
+		})
+
+		It("should send custom headers when httpHeaders is set", func() {
+			capturedHeader := make(chan string, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				select {
+				case capturedHeader <- r.Header.Get("X-Custom-Header"):
+				default:
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			_ = createAndReconcile("http-headers-resource", []corev1alpha1.ServiceDependency{
+				{
+					Host:     host,
+					Port:     port,
+					HTTPPath: "/healthz",
+					HTTPHeaders: []corev1alpha1.HTTPHeader{
+						{Name: "X-Custom-Header", Value: "my-value"},
+					},
+				},
+			})
+			Expect(<-capturedHeader).To(Equal("my-value"))
+		})
+
+		It("should resolve when response matches an expected status code", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNoContent) // 204
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-status-204-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPExpectedStatuses: []int32{200, 204}},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
+
+		It("should not resolve when response does not match any expected status code", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK) // 200 — not in the expected list
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-status-mismatch-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPExpectedStatuses: []int32{204}},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should accept any 2xx when httpExpectedStatuses is omitted", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusCreated) // 201
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-status-2xx-default-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz"},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
 		})
 	})
 })

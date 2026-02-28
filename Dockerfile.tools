@@ -1,0 +1,8 @@
+FROM alpine:3.23
+
+RUN apk add wget curl netcat-openbsd \
+    && rm -rf /var/cache/apk/*
+
+LABEL org.opencontainers.image.source=https://github.com/user-cube/bootchain-operator
+
+USER 1001

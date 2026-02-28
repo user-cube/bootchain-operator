@@ -16,6 +16,7 @@ initContainers:
   command: ['sh', '-c', 'until nc -z redis 6379; do sleep 1; done']
 ```
 
+
 This is repetitive, easy to get wrong, and scattered across many manifests.
 
 ## The solution
@@ -43,7 +44,8 @@ The operator automatically injects the correct init containers into any `Deploym
 - **Automatic init container injection** — a mutating webhook injects `wait-for-*` init containers into matching Deployments
 - **In-cluster and external dependencies** — use `service` for Kubernetes Services in the same namespace, or `host` for external hostnames and IP addresses
 - **Circular dependency detection** — a validating webhook blocks any `BootDependency` that would create a dependency cycle
-- **Status tracking** — the controller continuously checks TCP reachability and updates `status.resolvedDependencies` (e.g. `2/3`) and `status.conditions`
+- **TCP, HTTP, and HTTPS health checks** — probe dependencies with a raw TCP connection or an HTTP(S) request to a specific path (e.g. `/healthz`). Supports custom methods (`httpMethod`), request headers (`httpHeaders`), and accepted status codes (`httpExpectedStatuses`). TLS certificate verification is on by default; set `insecure: true` to accept self-signed certificates
+- **Status tracking** — the controller continuously probes each dependency and updates `status.resolvedDependencies` (e.g. `2/3`) and `status.conditions`
 - **Prometheus metrics** — exposes reconciliation counters, duration histograms, and per-resource dependency gauges
 - **Helm chart** — production-ready chart with cert-manager TLS, leader election, and optional ServiceMonitor
 

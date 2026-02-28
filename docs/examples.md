@@ -127,6 +127,113 @@ spec:
 
 ---
 
+### HTTP health check
+
+Use `httpPath` to probe an HTTP endpoint instead of doing a raw TCP connection. The check performs an HTTP GET and requires a `2xx` response before the init container exits. This is useful when a service binds its port before it is fully initialised and exposes a dedicated health endpoint.
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  dependsOn:
+    - service: backend
+      port: 8080
+      httpPath: /healthz       # waits for HTTP 200 on http://backend:8080/healthz
+      timeout: 60s
+    - host: api.example.com    # external API with a health endpoint
+      port: 443
+      httpPath: /health
+      timeout: 30s
+    - service: postgres
+      port: 5432               # no httpPath → plain TCP check
+      timeout: 120s
+```
+
+`service` and `host` entries can freely mix TCP and HTTP checks within the same `BootDependency`.
+
+---
+
+### Advanced HTTP check (custom method, headers, and status codes)
+
+Use `httpMethod`, `httpHeaders`, and `httpExpectedStatuses` when a simple `GET`/`2xx` check is not enough. Common cases: endpoints that only accept `HEAD`, return `204`, or require an `Authorization` header.
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: auth-service
+      port: 8080
+      httpPath: /healthz
+      httpMethod: POST                   # probe with POST
+      httpHeaders:
+        - name: Authorization
+          value: Bearer my-bootstrap-token
+        - name: X-Probe-Source
+          value: bootchain
+      httpExpectedStatuses: [200, 204]   # accept 200 or 204
+      timeout: 30s
+    - service: metrics-svc
+      port: 9090
+      httpPath: /-/healthy
+      httpMethod: HEAD                   # lightweight HEAD probe
+      timeout: 10s
+    - service: storage
+      port: 8080
+      httpPath: /ping
+      httpExpectedStatuses: [204]        # ping returns 204 No Content
+      timeout: 20s
+```
+
+When `httpMethod`, `httpHeaders`, or `httpExpectedStatuses` are set, the init container uses `curl` instead of `wget`. With none of these fields, `wget --spider` is used (backward-compatible).
+
+!!! note
+    `httpMethod`, `httpHeaders`, and `httpExpectedStatuses` all require `httpPath` to be set. The API server rejects resources that specify any of these fields without `httpPath`.
+
+---
+
+### HTTPS health check
+
+Use `httpScheme: https` together with `httpPath` to probe an HTTPS endpoint. By default TLS certificates are verified. Set `insecure: true` to skip verification (useful for services with self-signed certificates).
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  dependsOn:
+    - host: secure-api.example.com   # external HTTPS API — full TLS verification
+      port: 443
+      httpPath: /healthz
+      httpScheme: https
+      timeout: 60s
+    - service: internal-api          # in-cluster service with self-signed cert
+      port: 8443
+      httpPath: /ready
+      httpScheme: https
+      insecure: true                 # skip TLS verification
+      timeout: 30s
+    - service: postgres              # plain TCP check — no httpPath
+      port: 5432
+      timeout: 120s
+```
+
+!!! note
+    `insecure: true` only skips TLS certificate verification. The connection is still encrypted. Use it for services with self-signed or internal CA certificates that are not in the system trust store.
+
+!!! warning
+    Both `httpScheme` and `insecure` require `httpPath` to be set. The API server rejects resources that specify either field without `httpPath`.
+
+---
+
 ### Circular dependency (rejected)
 
 The validating webhook blocks cycles at admission time.
