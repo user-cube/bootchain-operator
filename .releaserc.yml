@@ -7,10 +7,9 @@ plugins:
   - "@semantic-release/commit-analyzer"
   - "@semantic-release/release-notes-generator"
 
-  # Update Chart.yaml version
+  # Update Chart.yaml version and appVersion (both set to release version)
   - ["semantic-release-helm", {
       chartPath: "charts/bootchain-operator",
-      onlyUpdateVersion: true,
       populateChangelog: true
     }]
 
