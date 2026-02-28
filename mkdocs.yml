@@ -1,6 +1,6 @@
 site_name: bootchain-operator
 site_description: A Kubernetes operator that makes service boot dependencies declarative and automatic
-site_url: https://user-cube.github.io/bootchain-operator
+site_url: https://bootchain-operator.ruicoelho.dev
 repo_name: user-cube/bootchain-operator
 repo_url: https://github.com/user-cube/bootchain-operator
 edit_uri: edit/main/docs/

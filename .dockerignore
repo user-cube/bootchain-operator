@@ -1,11 +1,47 @@
 # More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Ignore everything by default and re-include only needed files
-**
+# Keep build context minimal: only Go source and modules are needed for the manager binary.
 
-# Re-include Go source files (but not *_test.go)
-!**/*.go
-**/*_test.go
+# Version control and IDE
+.git
+.gitignore
+.idea
+.vscode
+.cursor
+.claude
+*.swp
+*.swo
+*~
 
-# Re-include Go module files
-!go.mod
-!go.sum
+# CI/CD and release
+.github
+.releaserc.yml
+CNAME
+
+# Docs and MkDocs (not needed for Go build)
+docs
+site
+venv
+mkdocs.yml
+*.md
+
+# Kubernetes manifests and Helm (not needed for binary)
+config
+charts
+hack
+
+# Tests (e2e and _test.go are not needed for build)
+test
+*_test.go
+
+# Build artifacts and tooling
+Makefile
+Taskfile.yml
+PROJECT
+Dockerfile
+Dockerfile.cross
+.dockerignore
+bin
+*.test
+*.out
+go.work
+*.kubeconfig
