@@ -100,6 +100,33 @@ Three init containers are injected. The application pod only starts once all thr
 
 ---
 
+### External host dependency
+
+Use `host` instead of `service` when the dependency lives outside the cluster — a managed database, an external API, or any hostname/IP reachable from inside the cluster.
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - host: db.example.com       # external managed database
+      port: 5432
+      timeout: 120s
+    - service: redis             # in-cluster cache
+      port: 6379
+      timeout: 30s
+```
+
+`service` and `host` entries can be mixed freely. Each entry must specify **exactly one** of the two — the validating webhook rejects entries with both set or neither set.
+
+!!! note
+    `host` dependencies are resolved directly by the init container without DNS look-up via `svc.cluster.local`. They are also excluded from cycle detection since external hosts cannot form a `BootDependency` cycle.
+
+---
+
 ### Circular dependency (rejected)
 
 The validating webhook blocks cycles at admission time.
@@ -388,7 +415,7 @@ If the cycle detection false-positives, describe all `BootDependency` objects in
 
 ```bash
 kubectl get bootdependency -A \
-  -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,DEPS:.spec.dependsOn[*].service'
+  -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SERVICES:.spec.dependsOn[*].service,HOSTS:.spec.dependsOn[*].host'
 ```
 
 ---

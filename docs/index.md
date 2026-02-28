@@ -30,9 +30,9 @@ metadata:
   namespace: default
 spec:
   dependsOn:
-    - service: payments-db
+    - service: payments-db   # in-cluster Kubernetes Service
       port: 5432
-    - service: redis
+    - host: cache.example.com  # external host (DNS / IP)
       port: 6379
 ```
 
@@ -41,6 +41,7 @@ The operator automatically injects the correct init containers into any `Deploym
 ## Features
 
 - **Automatic init container injection** — a mutating webhook injects `wait-for-*` init containers into matching Deployments
+- **In-cluster and external dependencies** — use `service` for Kubernetes Services in the same namespace, or `host` for external hostnames and IP addresses
 - **Circular dependency detection** — a validating webhook blocks any `BootDependency` that would create a dependency cycle
 - **Status tracking** — the controller continuously checks TCP reachability and updates `status.resolvedDependencies` (e.g. `2/3`) and `status.conditions`
 - **Prometheus metrics** — exposes reconciliation counters, duration histograms, and per-resource dependency gauges

@@ -75,7 +75,8 @@ func main() {
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.StringVar(&webhookCertPath, "webhook-cert-path", "", "The directory that contains the webhook certificate.")
 	flag.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")
-	flag.StringVar(&webhookHost, "webhook-host", "", "The host address the webhook server binds to. Defaults to all interfaces (0.0.0.0) when empty.")
+	flag.StringVar(&webhookHost, "webhook-host", "",
+		"The host address the webhook server binds to. Defaults to all interfaces (0.0.0.0) when empty.")
 	flag.StringVar(&webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
 	flag.StringVar(&metricsCertPath, "metrics-cert-path", "",
 		"The directory that contains the metrics server certificate.")
@@ -186,7 +187,7 @@ func main() {
 	if err := (&controller.BootDependencyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("bootdependency-controller"),
+		Recorder: mgr.GetEventRecorderFor("bootdependency-controller"), //nolint:staticcheck
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "BootDependency")
 		os.Exit(1)
