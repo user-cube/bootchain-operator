@@ -21,7 +21,7 @@ jobs:
     name: Lint Helm chart
     uses: user-cube/reusable-cicd/.github/workflows/helm-lint.yml@main
     with:
-      charts_dir: charts
+      config: .github/configs/ct.yaml
 
   helm-docs:
     name: Update chart docs
