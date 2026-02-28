@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/user-cube/bootchain-operator/compare/v1.0.2...v1.0.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* add missing requirements ([dd46677](https://github.com/user-cube/bootchain-operator/commit/dd46677d0420b30a16050ad45b10551f0382d608))
+
 ## [1.0.2](https://github.com/user-cube/bootchain-operator/compare/v1.0.1...v1.0.2) (2026-02-28)
 
 
