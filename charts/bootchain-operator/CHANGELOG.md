@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/user-cube/bootchain-operator/compare/v1.2.0...v1.2.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* fix cicd ([1751e4a](https://github.com/user-cube/bootchain-operator/commit/1751e4a4ed13f2be030d16b47650a411f8ab515a))
+
 # [1.2.0](https://github.com/user-cube/bootchain-operator/compare/v1.1.0...v1.2.0) (2026-02-28)
 
 
