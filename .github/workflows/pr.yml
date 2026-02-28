@@ -16,12 +16,16 @@ jobs:
   go-build-and-test:
     name: Build and test
     uses: user-cube/reusable-cicd/.github/workflows/golang-cli-apps_build-and-test-pr.yml@main
+    with:
+      pre-test: make setup-envtest
+      test-cmd: make test
+      build-cmd: make build
 
   helm-lint:
     name: Lint Helm chart
     uses: user-cube/reusable-cicd/.github/workflows/helm-lint.yml@main
     with:
-      charts_dir: charts
+      config: .github/configs/ct.yaml
 
   helm-docs:
     name: Update chart docs

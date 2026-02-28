@@ -1,0 +1,10 @@
+# chart-testing (ct) configuration
+# https://github.com/helm/chart-testing
+
+chart-dirs:
+  - charts
+
+# Version bump is managed by semantic-release on merge to main.
+# Disabling this check avoids false failures on PRs where the version
+# has not yet been bumped.
+check-version-increment: false

@@ -25,6 +25,7 @@ jobs:
     uses: user-cube/reusable-cicd/.github/workflows/semantic-release_simple-release.yml@main
     with:
       node-version: "20"
+      chart-path: "charts/bootchain-operator"
       extra-plugins: |
         semantic-release-helm
         @semantic-release/exec
