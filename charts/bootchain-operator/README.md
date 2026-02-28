@@ -6,6 +6,15 @@ A Kubernetes operator that makes service boot dependencies declarative and autom
 
 **Homepage:** <https://github.com/user-cube/bootchain-operator>
 
+## Install
+
+```bash
+helm install bootchain-operator oci://ghcr.io/user-cube/bootchain-operator/bootchain-operator \
+  --namespace bootchain-operator-system --create-namespace --wait
+```
+
+Requires [cert-manager](https://cert-manager.io/) for webhook TLS. See [documentation](https://user-cube.github.io/bootchain-operator/getting-started/installation/) for full install steps.
+
 ## Maintainers
 
 | Name | Email | Url |
