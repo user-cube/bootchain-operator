@@ -1,0 +1,37 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  actionlint:
+    name: Lint workflows
+    uses: user-cube/reusable-cicd/.github/workflows/actionlint.yml@main
+
+  go-build-and-test:
+    name: Build and test
+    uses: user-cube/reusable-cicd/.github/workflows/golang-cli-apps_build-and-test-pr.yml@main
+
+  helm-lint:
+    name: Lint Helm chart
+    uses: user-cube/reusable-cicd/.github/workflows/helm-lint.yml@main
+    with:
+      charts_dir: charts
+
+  helm-docs:
+    name: Update chart docs
+    uses: user-cube/reusable-cicd/.github/workflows/helm-docs.yml@main
+    with:
+      chart_search_root: charts/
+      values_file: values.yaml
+      output_file: README.md
+      git_push: true
+      git_commit_message: "docs: update helm-docs"
+    secrets:
+      GITHUB_APP_ID: ${{ secrets.DEVOPS_BUDDY_APP_ID }}
+      GITHUB_APP_PRIVATE_KEY: ${{ secrets.DEVOPS_BUDDY_PRIVATE_KEY }}

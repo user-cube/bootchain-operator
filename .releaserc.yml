@@ -1,0 +1,36 @@
+branches:
+  - main
+
+tagFormat: v${version}
+
+plugins:
+  - "@semantic-release/commit-analyzer"
+  - "@semantic-release/release-notes-generator"
+
+  # Update Chart.yaml version
+  - ["semantic-release-helm", {
+      chartPath: "charts/bootchain-operator",
+      onlyUpdateVersion: true,
+      populateChangelog: true
+    }]
+
+  # Update root CHANGELOG.md
+  - ["@semantic-release/changelog", { changelogFile: "CHANGELOG.md" }]
+
+  # Regenerate Helm chart README using helm-docs
+  - ["@semantic-release/exec", {
+      prepareCmd: "helm-docs --chart-search-root=charts/ --output-file=README.md"
+    }]
+
+  # Commit all generated files
+  - ["@semantic-release/git", {
+      assets: [
+        "charts/bootchain-operator/Chart.yaml",
+        "charts/bootchain-operator/CHANGELOG.md",
+        "charts/bootchain-operator/README.md",
+        "CHANGELOG.md"
+      ],
+      message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }]
+
+  - "@semantic-release/github"

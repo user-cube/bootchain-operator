@@ -1,0 +1,16 @@
+## Reference: https://github.com/helm/chart-releaser
+index-path: "./index.yaml"
+
+# PGP signing
+sign: false
+
+# Release notes are provided via CHANGELOG.md by the helm-releaser workflow.
+generate-release-notes: false
+
+git-repo: bootchain-operator
+owner: user-cube
+git-base-url: https://api.github.com/
+git-upload-url: https://uploads.github.com/
+package-path: .cr-release-packages
+pages-branch: gh-pages
+skip-existing: true

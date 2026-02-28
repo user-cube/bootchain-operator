@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      docs_only:
+        description: 'Run only the docs job (build and publish MkDocs to gh-pages)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.docs_only != 'true')
+    name: Semantic Release
+    uses: user-cube/reusable-cicd/.github/workflows/semantic-release_simple-release.yml@main
+    with:
+      node-version: "20"
+      extra-plugins: |
+        semantic-release-helm
+        @semantic-release/exec
+      pre-install: |
+        version=v1.14.2
+        curl -sSLo /tmp/helm-docs.tar.gz "https://github.com/norwoodj/helm-docs/releases/download/${version}/helm-docs_${version#v}_Linux_x86_64.tar.gz"
+        tar -xzf /tmp/helm-docs.tar.gz -C /tmp helm-docs
+        install -m 755 /tmp/helm-docs /usr/local/bin/helm-docs
+    secrets:
+      GITHUB_APP_ID: ${{ secrets.DEVOPS_BUDDY_APP_ID }}
+      GITHUB_APP_PRIVATE_KEY: ${{ secrets.DEVOPS_BUDDY_PRIVATE_KEY }}
+
+  docker:
+    name: Build and Push Docker Image
+    needs: release
+    if: needs.release.outputs.new-release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish:
+    name: Publish Helm Chart
+    needs: [release, docker]
+    if: needs.release.outputs.new-release == 'true'
+    uses: user-cube/reusable-cicd/.github/workflows/helm-releaser.yml@main
+    with:
+      charts_dir: charts
+      config: .github/configs/cr.yaml
+      push_oci: true
+    secrets:
+      GITHUB_APP_ID: ${{ secrets.DEVOPS_BUDDY_APP_ID }}
+      GITHUB_APP_PRIVATE_KEY: ${{ secrets.DEVOPS_BUDDY_PRIVATE_KEY }}
+
+  docs:
+    name: Build and Publish Docs
+    needs: [release, docker, publish]
+    if: needs.release.outputs.new-release == 'true'
+    uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
+    with:
+      python-version: "3.x"
+      mkdocs-packages: "mkdocs-material pymdownx"
+      docs-subdir: docs
+      pages-branch: gh-pages
+    secrets:
+      GITHUB_APP_ID: ${{ secrets.DEVOPS_BUDDY_APP_ID }}
+      GITHUB_APP_PRIVATE_KEY: ${{ secrets.DEVOPS_BUDDY_PRIVATE_KEY }}
+
+  docs-only:
+    name: Build and Publish Docs (manual)
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.docs_only == 'true'
+    uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
+    with:
+      python-version: "3.x"
+      mkdocs-packages: "mkdocs-material pymdownx"
+      docs-subdir: docs
+      pages-branch: gh-pages
+    secrets:
+      GITHUB_APP_ID: ${{ secrets.DEVOPS_BUDDY_APP_ID }}
+      GITHUB_APP_PRIVATE_KEY: ${{ secrets.DEVOPS_BUDDY_PRIVATE_KEY }}
