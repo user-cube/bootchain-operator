@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/user-cube/bootchain-operator/compare/v1.0.3...v1.1.0) (2026-02-28)
+
+
+### Features
+
+* add support for external host dependencies ([#6](https://github.com/user-cube/bootchain-operator/issues/6)) ([021527c](https://github.com/user-cube/bootchain-operator/commit/021527cfe1153daac447ee4fdd73bc1b39eb86f4))
+
 ## [1.0.3](https://github.com/user-cube/bootchain-operator/compare/v1.0.2...v1.0.3) (2026-02-28)
 
 
