@@ -52,15 +52,27 @@ spec:
                   Deployment with the same name in this namespace is allowed to start.
                 items:
                   description: ServiceDependency defines a single service that must be reachable before the owner can start.
+                  description: |-
+                    ServiceDependency defines a single dependency that must be reachable before the owner can start.
+                    Exactly one of `service` or `host` must be specified.
                   properties:
+                    host:
+                      description: |-
+                        host is an external hostname or IP address to wait for.
+                        Use this for dependencies outside the cluster (e.g. a managed database, an external API).
+                        Mutually exclusive with service.
+                      minLength: 1
+                      type: string
                     port:
-                      description: port is the TCP port that must be open on the service.
+                      description: port is the TCP port that must be open on the dependency.
                       format: int32
                       maximum: 65535
                       minimum: 1
                       type: integer
                     service:
-                      description: service is the name of the Kubernetes Service to wait for.
+                      description: |-
+                        service is the name of a Kubernetes Service in the same namespace to wait for.
+                        Mutually exclusive with host.
                       minLength: 1
                       type: string
                     timeout:
@@ -71,8 +83,11 @@ spec:
                       type: string
                   required:
                   - port
-                  - service
                   type: object
+                  x-kubernetes-validations:
+                  - message: exactly one of service or host must be specified
+                    rule: (has(self.service) && self.service != '') != (has(self.host)
+                      && self.host != '')
                 minItems: 1
                 type: array
             required:

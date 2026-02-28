@@ -86,7 +86,7 @@ func injectInitContainers(existing []corev1.Container, deps []corev1alpha1.Servi
 
 	// Prepend the wait-for containers so they run before any user-defined init containers.
 	for _, dep := range deps {
-		name := fmt.Sprintf("wait-for-%s", dep.Service)
+		name := fmt.Sprintf("wait-for-%s", depTarget(dep))
 		if _, ok := existingNames[name]; ok {
 			// Already injected — skip to stay idempotent.
 			continue
@@ -98,21 +98,36 @@ func injectInitContainers(existing []corev1.Container, deps []corev1alpha1.Servi
 	return result
 }
 
+// depTarget returns the hostname to connect to for a dependency.
+// For in-cluster services it returns the service name (resolved via cluster DNS);
+// for external deps it returns the host directly.
+func depTarget(dep corev1alpha1.ServiceDependency) string {
+	if dep.Host != "" {
+		return dep.Host
+	}
+	return dep.Service
+}
+
 // buildWaitContainer creates a busybox init container that polls the given
-// service:port via netcat until it is reachable.
+// host:port via netcat until it is reachable.
 func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.Container {
 	timeout := dep.Timeout
 	if timeout == "" {
 		timeout = "60s"
 	}
 
+	target := depTarget(dep)
+
+	// The script polls the target every second until it is reachable.
+	// `timeout` wraps the loop so the init container does not block forever.
 	script := fmt.Sprintf(
 		"echo 'Waiting for %s:%d...'; "+
-			"until nc -z %s %d; do sleep 1; done; "+
+			"timeout %s sh -c 'until nc -z %s %d; do sleep 1; done'; "+
 			"echo '%s:%d is ready'",
-		dep.Service, dep.Port,
-		dep.Service, dep.Port,
-		dep.Service, dep.Port,
+		target, dep.Port,
+		timeout,
+		target, dep.Port,
+		target, dep.Port,
 	)
 
 	return corev1.Container{

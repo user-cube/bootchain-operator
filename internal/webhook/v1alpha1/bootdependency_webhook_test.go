@@ -48,6 +48,57 @@ var _ = Describe("BootDependency Webhook", func() {
 		})
 	})
 
+	Context("When creating a BootDependency with both service and host set", func() {
+		It("should deny creation when both service and host are specified", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-invalid", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Service: "postgres", Host: "db.example.com", Port: 5432},
+					},
+				},
+			}
+			validator := &BootDependencyCustomValidator{Client: k8sClient}
+			_, err := validator.ValidateCreate(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("exactly one of service or host must be specified"))
+		})
+	})
+
+	Context("When creating a BootDependency with neither service nor host set", func() {
+		It("should deny creation when neither service nor host is specified", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-empty", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Port: 5432},
+					},
+				},
+			}
+			validator := &BootDependencyCustomValidator{Client: k8sClient}
+			_, err := validator.ValidateCreate(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("exactly one of service or host must be specified"))
+		})
+	})
+
+	Context("When creating a BootDependency with only a host set", func() {
+		It("should allow creation when only host is specified", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-external", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Host: "db.example.com", Port: 5432},
+					},
+				},
+			}
+			validator := &BootDependencyCustomValidator{Client: k8sClient}
+			warnings, err := validator.ValidateCreate(ctx, bd)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+	})
+
 	Context("When creating a BootDependency that introduces a circular dependency", func() {
 		BeforeEach(func() {
 			bdB := &corev1alpha1.BootDependency{

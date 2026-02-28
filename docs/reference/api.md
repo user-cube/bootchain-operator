@@ -13,18 +13,23 @@ A `BootDependency` declares the set of TCP services that must be reachable befor
 ```yaml
 spec:
   dependsOn:
-    - service: <string>        # required
+    - service: <string>        # exactly one of service or host is required
       port: <integer>          # required
       timeout: <string>        # optional, default: "60s"
+
+    - host: <string>           # use for external dependencies (DNS / IP)
+      port: <integer>
+      timeout: <string>
 ```
 
 #### `spec.dependsOn`
 
-List of service dependencies. At least one entry is required.
+List of dependencies. At least one entry is required. Each entry must specify **exactly one** of `service` or `host`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `service` | string | yes | Name of the Kubernetes `Service` to wait for |
+| `service` | string | one of `service`/`host` | Name of the Kubernetes `Service` in the same namespace to wait for |
+| `host` | string | one of `service`/`host` | External hostname or IP address to wait for (e.g. a managed database, an external API) |
 | `port` | integer (1–65535) | yes | TCP port that must accept connections |
 | `timeout` | duration string | no | How long to wait per dependency. Defaults to `60s` |
 
@@ -56,7 +61,9 @@ payments-api   True    2/2        5m
 svc-a          False   0/1        1m
 ```
 
-### Example
+### Examples
+
+In-cluster services:
 
 ```yaml
 apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
@@ -74,6 +81,24 @@ spec:
       timeout: 30s
 ```
 
+External dependencies (outside the cluster):
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - host: db.example.com
+      port: 5432
+      timeout: 120s
+    - service: redis
+      port: 6379
+      timeout: 30s
+```
+
 ### Naming convention
 
 The `BootDependency` name must match the `Deployment` name it targets. The operator looks up a `BootDependency` whose `metadata.name` equals the Deployment's `metadata.name` in the same namespace.
@@ -84,7 +109,7 @@ Deployment: payments-api  →  BootDependency: payments-api  (same namespace)
 
 ### Injected init containers
 
-For each entry in `spec.dependsOn`, the mutating webhook prepends an init container to the Deployment's pod template:
+For each entry in `spec.dependsOn`, the mutating webhook prepends an init container to the Deployment's pod template. The target address is the `service` name (resolved via cluster DNS) or the `host` value (used directly):
 
 ```yaml
 initContainers:
@@ -94,7 +119,7 @@ initContainers:
   command:
   - sh
   - -c
-  - "echo 'Waiting for payments-db:5432...'; until nc -z payments-db 5432; do sleep 1; done; echo 'payments-db:5432 is ready'"
+  - "echo 'Waiting for payments-db:5432...'; timeout 60s sh -c 'until nc -z payments-db 5432; do sleep 1; done'; echo 'payments-db:5432 is ready'"
 ```
 
 Init containers are injected idempotently — re-applying a Deployment will not duplicate them.

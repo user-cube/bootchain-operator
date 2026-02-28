@@ -20,13 +20,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ServiceDependency defines a single service that must be reachable before the owner can start.
+// ServiceDependency defines a single dependency that must be reachable before the owner can start.
+// Exactly one of `service` or `host` must be specified.
 type ServiceDependency struct {
-	// service is the name of the Kubernetes Service to wait for.
+	// service is the name of a Kubernetes Service in the same namespace to wait for.
+	// Mutually exclusive with host.
 	// +kubebuilder:validation:MinLength=1
-	Service string `json:"service"`
+	// +optional
+	Service string `json:"service,omitempty"`
 
-	// port is the TCP port that must be open on the service.
+	// host is an external hostname or IP address to wait for.
+	// Use this for dependencies outside the cluster (e.g. a managed database, an external API).
+	// Mutually exclusive with service.
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	Host string `json:"host,omitempty"`
+
+	// port is the TCP port that must be open on the dependency.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
