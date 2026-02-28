@@ -5,35 +5,6 @@ vars:
   CRD_NAME: core.bootchain.ruicoelho.dev_bootdependencies.yaml
 
 tasks:
-  # ── Code generation ────────────────────────────────────────────────────────
-  generate:
-    desc: Regenerate DeepCopy methods and CRD manifests
-    cmds:
-      - make generate manifests
-
-  # ── Build ──────────────────────────────────────────────────────────────────
-  build:
-    desc: Build the operator binary
-    cmds:
-      - make build
-
-  docker-build:
-    desc: Build the operator Docker image
-    cmds:
-      - make docker-build IMG={{.IMG}}
-
-  # ── Tests ──────────────────────────────────────────────────────────────────
-  test:
-    desc: Run unit and controller tests
-    cmds:
-      - make test
-
-  # ── Lint ───────────────────────────────────────────────────────────────────
-  lint:
-    desc: Run golangci-lint
-    cmds:
-      - make lint
-
   # ── CRD ────────────────────────────────────────────────────────────────────
   install-crd:
     desc: Install the BootDependency CRD into the current cluster
@@ -53,7 +24,7 @@ tasks:
       - ENABLE_WEBHOOKS=false go run ./cmd/main.go
 
   run-with-webhook:
-    desc: Run the operator locally with the mutating webhook (requires dev certs)
+    desc: Run the operator locally with webhooks enabled (requires dev certs)
     deps: [install-crd]
     vars:
       CERT_DIR: /tmp/bootchain-webhook-certs
@@ -75,7 +46,7 @@ tasks:
       - bash hack/gen-dev-certs.sh
 
   webhook-register:
-    desc: Register the MutatingWebhookConfiguration pointing to localhost
+    desc: Register webhook configurations pointing to localhost
     cmds:
       - bash hack/register-dev-webhook.sh
 
@@ -101,17 +72,6 @@ tasks:
       - task: webhook-gen-certs
       - task: webhook-register
       - task: webhook-enable-namespace
-
-  # ── Deploy / undeploy ──────────────────────────────────────────────────────
-  deploy:
-    desc: Deploy the operator to the cluster (requires docker-build first)
-    cmds:
-      - make deploy IMG={{.IMG}}
-
-  undeploy:
-    desc: Remove the operator from the cluster
-    cmds:
-      - make undeploy
 
   # ── Samples ────────────────────────────────────────────────────────────────
   apply-sample:
@@ -174,19 +134,3 @@ tasks:
     desc: Deploy the MkDocs documentation to GitHub Pages
     cmds:
       - source venv/bin/activate && mkdocs gh-deploy --force
-
-  # ── Helpers ────────────────────────────────────────────────────────────────
-  deps:
-    desc: Tidy and download Go modules
-    cmds:
-      - go mod tidy
-
-  fmt:
-    desc: Format Go source files
-    cmds:
-      - go fmt ./...
-
-  vet:
-    desc: Run go vet
-    cmds:
-      - go vet ./...
