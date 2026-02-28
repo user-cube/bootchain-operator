@@ -12,7 +12,7 @@ rules:
   - create
   - patch
 - apiGroups:
-  - core.bootchain.ruicoelho.dev
+  - core.bootchain-operator.ruicoelho.dev
   resources:
   - bootdependencies
   verbs:
@@ -24,13 +24,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - core.bootchain.ruicoelho.dev
+  - core.bootchain-operator.ruicoelho.dev
   resources:
   - bootdependencies/finalizers
   verbs:
   - update
 - apiGroups:
-  - core.bootchain.ruicoelho.dev
+  - core.bootchain-operator.ruicoelho.dev
   resources:
   - bootdependencies/status
   verbs:

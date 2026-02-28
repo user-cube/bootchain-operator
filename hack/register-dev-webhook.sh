@@ -66,10 +66,10 @@ webhooks:
   - name: vbootdependency-v1alpha1.kb.io
     admissionReviewVersions: ["v1"]
     clientConfig:
-      url: "https://${HOST_IP}:${WEBHOOK_PORT}/validate-core-bootchain-ruicoelho-dev-v1alpha1-bootdependency"
+      url: "https://${HOST_IP}:${WEBHOOK_PORT}/validate-core-bootchain-operator-ruicoelho-dev-v1alpha1-bootdependency"
       caBundle: "${CA_BUNDLE}"
     rules:
-      - apiGroups: ["core.bootchain.ruicoelho.dev"]
+      - apiGroups: ["core.bootchain-operator.ruicoelho.dev"]
         apiVersions: ["v1alpha1"]
         operations: ["CREATE", "UPDATE"]
         resources: ["bootdependencies"]

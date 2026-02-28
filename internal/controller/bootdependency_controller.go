@@ -48,9 +48,9 @@ type BootDependencyReconciler struct {
 	Recorder record.EventRecorder
 }
 
-// +kubebuilder:rbac:groups=core.bootchain.ruicoelho.dev,resources=bootdependencies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core.bootchain.ruicoelho.dev,resources=bootdependencies/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core.bootchain.ruicoelho.dev,resources=bootdependencies/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core.bootchain-operator.ruicoelho.dev,resources=bootdependencies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core.bootchain-operator.ruicoelho.dev,resources=bootdependencies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core.bootchain-operator.ruicoelho.dev,resources=bootdependencies/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 
 func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

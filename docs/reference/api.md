@@ -2,7 +2,7 @@
 
 ## BootDependency
 
-**Group:** `core.bootchain.ruicoelho.dev`
+**Group:** `core.bootchain-operator.ruicoelho.dev`
 **Version:** `v1alpha1`
 **Scope:** Namespaced
 
@@ -59,7 +59,7 @@ svc-a          False   0/1        1m
 ### Example
 
 ```yaml
-apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
 kind: BootDependency
 metadata:
   name: payments-api

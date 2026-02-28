@@ -23,7 +23,7 @@ This is repetitive, easy to get wrong, and scattered across many manifests.
 With bootchain-operator, you declare dependencies once in a `BootDependency` resource:
 
 ```yaml
-apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
 kind: BootDependency
 metadata:
   name: payments-api

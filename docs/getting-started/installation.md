@@ -73,5 +73,5 @@ helm uninstall bootchain-operator --namespace bootchain-operator-system
 
     To also delete the CRD, run:
     ```bash
-    kubectl delete crd bootdependencies.core.bootchain.ruicoelho.dev
+    kubectl delete crd bootdependencies.core.bootchain-operator.ruicoelho.dev
     ```

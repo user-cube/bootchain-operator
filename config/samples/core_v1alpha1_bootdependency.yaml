@@ -1,4 +1,4 @@
-apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
 kind: BootDependency
 metadata:
   name: payments-api

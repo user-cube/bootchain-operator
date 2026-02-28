@@ -2,7 +2,7 @@ version: "3"
 
 vars:
   IMG: bootchain-operator:latest
-  CRD_NAME: core.bootchain.ruicoelho.dev_bootdependencies.yaml
+  CRD_NAME: core.bootchain-operator.ruicoelho.dev_bootdependencies.yaml
   HELM_RELEASE: bootchain-operator
   HELM_NAMESPACE: bootchain-operator-system
   WEBHOOK_CERT_DIR: /tmp/bootchain-webhook-certs

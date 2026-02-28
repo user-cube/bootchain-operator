@@ -5,7 +5,7 @@ This guide walks through a complete example: declaring that `payments-api` depen
 ## 1. Create a BootDependency
 
 ```yaml title="payments-api-deps.yaml"
-apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
 kind: BootDependency
 metadata:
   name: payments-api
@@ -90,7 +90,7 @@ The pod will stay in `Init:0/2` until both `payments-db:5432` and `redis:6379` a
 The validating webhook blocks dependency cycles. Try creating a cycle:
 
 ```yaml
-apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
 kind: BootDependency
 metadata:
   name: svc-a
@@ -103,14 +103,14 @@ spec:
 
 ```bash
 kubectl apply -f svc-a.yaml
-# bootdependency.core.bootchain.ruicoelho.dev/svc-a created
+# bootdependency.core.bootchain-operator.ruicoelho.dev/svc-a created
 ```
 
 Now try creating `svc-b` that depends back on `svc-a`:
 
 ```bash
 kubectl apply -f - <<EOF
-apiVersion: core.bootchain.ruicoelho.dev/v1alpha1
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
 kind: BootDependency
 metadata:
   name: svc-b

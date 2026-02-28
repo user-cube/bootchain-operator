@@ -36,12 +36,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-core-bootchain-ruicoelho-dev-v1alpha1-bootdependency
+      path: /validate-core-bootchain-operator-ruicoelho-dev-v1alpha1-bootdependency
   failurePolicy: Fail
   name: vbootdependency-v1alpha1.kb.io
   rules:
   - apiGroups:
-    - core.bootchain.ruicoelho.dev
+    - core.bootchain-operator.ruicoelho.dev
     apiVersions:
     - v1alpha1
     operations:

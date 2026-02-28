@@ -32,7 +32,7 @@ import (
 
 var bootdependencylog = logf.Log.WithName("bootdependency-webhook")
 
-// +kubebuilder:webhook:path=/validate-core-bootchain-ruicoelho-dev-v1alpha1-bootdependency,mutating=false,failurePolicy=fail,sideEffects=None,groups=core.bootchain.ruicoelho.dev,resources=bootdependencies,verbs=create;update,versions=v1alpha1,name=vbootdependency-v1alpha1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-core-bootchain-operator-ruicoelho-dev-v1alpha1-bootdependency,mutating=false,failurePolicy=fail,sideEffects=None,groups=core.bootchain-operator.ruicoelho.dev,resources=bootdependencies,verbs=create;update,versions=v1alpha1,name=vbootdependency-v1alpha1.kb.io,admissionReviewVersions=v1
 
 // BootDependencyCustomValidator validates BootDependency resources on create and update.
 // It detects circular dependencies across the namespace using DFS.

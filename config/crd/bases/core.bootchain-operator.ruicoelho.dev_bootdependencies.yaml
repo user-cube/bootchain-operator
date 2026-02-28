@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
-  name: bootdependencies.core.bootchain.ruicoelho.dev
+  name: bootdependencies.core.bootchain-operator.ruicoelho.dev
 spec:
-  group: core.bootchain.ruicoelho.dev
+  group: core.bootchain-operator.ruicoelho.dev
   names:
     kind: BootDependency
     listKind: BootDependencyList
