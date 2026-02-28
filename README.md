@@ -69,4 +69,4 @@ Full documentation is available at **https://user-cube.github.io/bootchain-opera
 
 ## License
 
-Apache License 2.0
+[Apache 2.0](LICENSE)
