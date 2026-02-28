@@ -108,7 +108,7 @@ func depTarget(dep corev1alpha1.ServiceDependency) string {
 	return dep.Service
 }
 
-// buildWaitContainer creates a busybox init container that polls the given
+// buildWaitContainer creates a minimal-tools init container that polls the given
 // host:port until it is reachable. When httpPath is set, an HTTP(S) GET is used
 // instead of a raw TCP check.
 func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.Container {
@@ -152,7 +152,7 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 
 	return corev1.Container{
 		Name:            name,
-		Image:           "busybox:1.36",
+		Image:           "ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0",
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"sh", "-c", script},
 	}

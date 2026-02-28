@@ -43,7 +43,7 @@ The `DeploymentCustomDefaulter` fires on `CREATE` and `UPDATE` of any `apps/v1 D
 3. The init container target is the `service` name (cluster DNS) or `host` value (used directly)
 4. Injection is **idempotent** — existing init containers with the same name are skipped
 
-The init containers use `busybox:1.36`. The polling command depends on whether `httpPath` is set:
+The init containers use `ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0`. The polling command depends on whether `httpPath` is set:
 
 - **TCP check** (default): `timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'`
 - **HTTP check**: `timeout {timeout} sh -c 'until wget -q --spider http://{target}:{port}{httpPath}; do sleep 1; done'`

@@ -70,7 +70,7 @@ var _ = Describe("buildWaitContainer", func() {
 			}
 			c := buildWaitContainer("wait-for-my-db", dep)
 			Expect(c.Name).To(Equal("wait-for-my-db"))
-			Expect(c.Image).To(Equal("busybox:1.36"))
+			Expect(c.Image).To(Equal("ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0"))
 			script := c.Command[len(c.Command)-1]
 			Expect(script).To(ContainSubstring("nc -z my-db 5432"))
 			Expect(script).To(ContainSubstring("timeout 30s"))

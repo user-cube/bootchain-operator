@@ -171,7 +171,7 @@ For each entry in `spec.dependsOn`, the mutating webhook prepends an init contai
 ```yaml
 initContainers:
 - name: wait-for-payments-db
-  image: busybox:1.36
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
   imagePullPolicy: IfNotPresent
   command:
   - sh
@@ -184,7 +184,7 @@ initContainers:
 ```yaml
 initContainers:
 - name: wait-for-auth-service
-  image: busybox:1.36
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
   imagePullPolicy: IfNotPresent
   command:
   - sh
@@ -197,7 +197,7 @@ initContainers:
 ```yaml
 initContainers:
 - name: wait-for-secure-api
-  image: busybox:1.36
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
   imagePullPolicy: IfNotPresent
   command:
   - sh
