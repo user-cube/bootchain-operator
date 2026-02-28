@@ -130,7 +130,35 @@ spec:
 
 The injected init container for `auth-service` will use `wget --spider` instead of `nc -z`, and only exit once it receives a `2xx` response.
 
-## 6. Circular dependency detection
+## 6. HTTPS health check
+
+Add `httpScheme: https` to probe an HTTPS endpoint. Certificate verification is on by default — set `insecure: true` to accept self-signed certificates:
+
+```yaml title="payments-api-deps-https.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - host: secure-api.example.com   # external HTTPS API
+      port: 443
+      httpPath: /healthz
+      httpScheme: https              # use HTTPS instead of HTTP
+      timeout: 30s
+    - service: internal-svc          # in-cluster service with self-signed cert
+      port: 8443
+      httpPath: /ready
+      httpScheme: https
+      insecure: true                 # skip TLS certificate verification
+      timeout: 30s
+```
+
+## 7. Circular dependency detection
 
 The validating webhook blocks dependency cycles. Try creating a cycle:
 
@@ -176,7 +204,7 @@ The cycle is blocked with a clear error message.
 
 ## Next steps
 
-- See more patterns (fan-in, chains, external hosts, HTTP checks) in the [Examples](../examples.md)
+- See more patterns (fan-in, chains, external hosts, HTTP/HTTPS checks) in the [Examples](../examples.md)
 - Learn about all available fields in the [API Reference](../reference/api.md)
 - Configure the Helm chart with [Helm Values](../reference/helm-values.md)
 - Monitor the operator with [Metrics](../reference/metrics.md)

@@ -43,7 +43,7 @@ The `DeploymentCustomDefaulter` fires on `CREATE` and `UPDATE` of any `apps/v1 D
 3. The init container target is the `service` name (cluster DNS) or `host` value (used directly)
 4. Injection is **idempotent** — existing init containers with the same name are skipped
 
-The init containers use `ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0`. The polling command depends on whether `httpPath` is set:
+The init containers use the `ghcr.io/user-cube/bootchain-operator/minimal-tools` image — a custom minimal image that bundles `netcat`, `wget`, and `curl`. The polling command depends on whether `httpPath` is set:
 
 - **TCP check** (default): `timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'`
 - **HTTP check**: `timeout {timeout} sh -c 'until wget -q --spider http://{target}:{port}{httpPath}; do sleep 1; done'`
@@ -58,6 +58,18 @@ The `BootDependencyCustomValidator` fires on `CREATE` and `UPDATE` of any `BootD
 3. Adds the incoming resource to the graph
 4. Runs a depth-first search (DFS) from the incoming resource's name
 5. Rejects the request if a back-edge (cycle) is detected, including the full cycle path in the error message
+
+## Init container image: minimal-tools
+
+The init containers injected by the mutating webhook use a custom image — `ghcr.io/user-cube/bootchain-operator/minimal-tools` — instead of a generic `busybox`. This image is purpose-built to include exactly the tools needed for health probing:
+
+| Tool | Used for |
+|---|---|
+| `netcat` (`nc`) | TCP connection checks (default probe) |
+| `wget` | HTTP and HTTPS health checks (`httpPath`) |
+| `curl` | Available for manual debugging inside init containers |
+
+Using a dedicated image rather than a large general-purpose one keeps the image footprint small while providing all the probing primitives the operator needs. The image is versioned and published to GitHub Container Registry alongside the operator.
 
 ## TLS and cert-manager
 

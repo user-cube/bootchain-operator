@@ -86,7 +86,7 @@ The reconciliation loop (`bootdependency_controller.go`) is the core of the oper
 
 Two separate packages, one per API version being intercepted:
 
-- **`v1/`** — Mutating webhook on `apps/v1 Deployment`. Looks up a `BootDependency` with the same name in the same namespace and, if found, injects one `initContainer` per declared dependency using a `netcat`-based TCP probe.
+- **`v1/`** — Mutating webhook on `apps/v1 Deployment`. Looks up a `BootDependency` with the same name in the same namespace and, if found, injects one `initContainer` per declared dependency. Uses `netcat` for TCP probes and `wget` for HTTP/HTTPS probes, sourced from the custom `minimal-tools` image.
 - **`v1alpha1/`** — Validating webhook on `BootDependency` CREATE/UPDATE. Builds the full dependency graph for the namespace and runs a DFS cycle-detection algorithm before admitting the object.
 
 #### `charts/bootchain-operator/`
