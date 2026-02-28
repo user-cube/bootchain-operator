@@ -67,7 +67,7 @@ jobs:
     if: needs.release.outputs.new-release == 'true'
     uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
     with:
-      python-version: "3.13"
+      python-version: "3.x"
       docs-subdir: docs
       pages-branch: gh-pages
     secrets:
