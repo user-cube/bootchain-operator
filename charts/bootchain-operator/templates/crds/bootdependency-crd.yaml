@@ -1,0 +1,136 @@
+{{- if .Values.crds.install }}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: bootdependencies.core.bootchain.ruicoelho.dev
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+    {{- if .Values.crds.keep }}
+    helm.sh/resource-policy: keep
+    {{- end }}
+  labels:
+    {{- include "bootchain-operator.labels" . | nindent 4 }}
+spec:
+  group: core.bootchain.ruicoelho.dev
+  names:
+    kind: BootDependency
+    listKind: BootDependencyList
+    plural: bootdependencies
+    singular: bootdependency
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
+      type: string
+    - jsonPath: .status.resolvedDependencies
+      name: Resolved
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: BootDependency is the Schema for the bootdependencies API
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation of an object.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this object represents.
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of BootDependency
+            properties:
+              dependsOn:
+                description: |-
+                  dependsOn is the list of services that must be reachable before the
+                  Deployment with the same name in this namespace is allowed to start.
+                items:
+                  description: ServiceDependency defines a single service that must be reachable before the owner can start.
+                  properties:
+                    port:
+                      description: port is the TCP port that must be open on the service.
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                    service:
+                      description: service is the name of the Kubernetes Service to wait for.
+                      minLength: 1
+                      type: string
+                    timeout:
+                      default: 60s
+                      description: |-
+                        timeout is how long to wait for this dependency before giving up.
+                        Defaults to 60s if not specified.
+                      type: string
+                  required:
+                  - port
+                  - service
+                  type: object
+                minItems: 1
+                type: array
+            required:
+            - dependsOn
+            type: object
+          status:
+            description: status defines the observed state of BootDependency
+            properties:
+              conditions:
+                description: conditions represent the current state of the BootDependency.
+                items:
+                  description: Condition contains details for one aspect of the current state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              resolvedDependencies:
+                description: resolvedDependencies is a human-readable summary of how many dependencies are currently reachable, e.g. "2/3".
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+{{- end }}

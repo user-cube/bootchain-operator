@@ -1,0 +1,82 @@
+{{- if .Values.webhook.enabled }}
+---
+# Webhook Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bootchain-operator.fullname" . }}-webhook
+  namespace: {{ include "bootchain-operator.namespace" . }}
+  labels:
+    {{- include "bootchain-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook
+spec:
+  type: {{ .Values.webhook.service.type }}
+  selector:
+    {{- include "bootchain-operator.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: webhook
+    port: 443
+    targetPort: webhook
+    protocol: TCP
+---
+# MutatingWebhookConfiguration — injects init containers into Deployments
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "bootchain-operator.fullname" . }}-mutating
+  labels:
+    {{- include "bootchain-operator.labels" . | nindent 4 }}
+  {{- if .Values.webhook.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ include "bootchain-operator.namespace" . }}/{{ include "bootchain-operator.fullname" . }}-webhook-cert
+  {{- end }}
+webhooks:
+- name: mdeployment-v1.kb.io
+  admissionReviewVersions: ["v1"]
+  clientConfig:
+    service:
+      name: {{ include "bootchain-operator.fullname" . }}-webhook
+      namespace: {{ include "bootchain-operator.namespace" . }}
+      path: /mutate-apps-v1-deployment
+  rules:
+  - apiGroups: [apps]
+    apiVersions: [v1]
+    operations: [CREATE, UPDATE]
+    resources: [deployments]
+  failurePolicy: Fail
+  sideEffects: None
+  namespaceSelector:
+    matchExpressions:
+    - key: kubernetes.io/metadata.name
+      operator: NotIn
+      values:
+      - kube-system
+      - kube-public
+---
+# ValidatingWebhookConfiguration — enforces no circular BootDependency chains
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "bootchain-operator.fullname" . }}-validating
+  labels:
+    {{- include "bootchain-operator.labels" . | nindent 4 }}
+  {{- if .Values.webhook.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ include "bootchain-operator.namespace" . }}/{{ include "bootchain-operator.fullname" . }}-webhook-cert
+  {{- end }}
+webhooks:
+- name: vbootdependency-v1alpha1.kb.io
+  admissionReviewVersions: ["v1"]
+  clientConfig:
+    service:
+      name: {{ include "bootchain-operator.fullname" . }}-webhook
+      namespace: {{ include "bootchain-operator.namespace" . }}
+      path: /validate-core-bootchain-ruicoelho-dev-v1alpha1-bootdependency
+  rules:
+  - apiGroups: [core.bootchain.ruicoelho.dev]
+    apiVersions: [v1alpha1]
+    operations: [CREATE, UPDATE]
+    resources: [bootdependencies]
+  failurePolicy: Fail
+  sideEffects: None
+{{- end }}

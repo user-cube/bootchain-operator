@@ -1,0 +1,106 @@
+# Default values for bootchain-operator.
+
+## @section Image configuration
+image:
+  repository: ghcr.io/user-cube/bootchain-operator
+  tag: ""  # Defaults to .Chart.AppVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+## @section Operator deployment
+replicaCount: 1
+
+nameOverride: ""
+fullnameOverride: ""
+
+## @section Service account
+serviceAccount:
+  # Name of the ServiceAccount to create. Defaults to the release fullname.
+  name: ""
+  annotations: {}
+
+## @section RBAC
+rbac:
+  # Create ClusterRole and ClusterRoleBinding for the operator.
+  create: true
+
+## @section Leader election
+leaderElection:
+  enabled: true
+
+## @section Resources
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 128Mi
+
+## @section Security contexts
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+## @section Health probes
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8081
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8081
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+## @section Metrics
+metrics:
+  enabled: true
+  # Use HTTPS for the metrics endpoint (requires cert-manager when secure=true).
+  secure: false
+  port: 8080
+  service:
+    type: ClusterIP
+    annotations: {}
+
+## @section Webhooks
+webhook:
+  enabled: true
+  port: 9443
+  service:
+    type: ClusterIP
+  # cert-manager integration: automatically provision TLS certificates.
+  certManager:
+    enabled: true
+    # Duration of the issued certificate.
+    duration: "8760h"   # 1 year
+    renewBefore: "720h" # 30 days
+
+## @section CRD installation
+crds:
+  # Install CRDs as part of the Helm release.
+  install: true
+  # Keep CRDs on chart uninstall (recommended for production).
+  keep: true
+
+## @section Node scheduling
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+## @section Pod annotations / labels
+podAnnotations: {}
+podLabels: {}

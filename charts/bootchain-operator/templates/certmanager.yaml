@@ -1,0 +1,36 @@
+{{- if and .Values.webhook.enabled .Values.webhook.certManager.enabled }}
+---
+# Self-signed Issuer used to sign the webhook certificate
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "bootchain-operator.fullname" . }}-selfsigned
+  namespace: {{ include "bootchain-operator.namespace" . }}
+  labels:
+    {{- include "bootchain-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+# Certificate for the webhook server TLS
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "bootchain-operator.fullname" . }}-webhook-cert
+  namespace: {{ include "bootchain-operator.namespace" . }}
+  labels:
+    {{- include "bootchain-operator.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "bootchain-operator.fullname" . }}-webhook-tls
+  duration: {{ .Values.webhook.certManager.duration }}
+  renewBefore: {{ .Values.webhook.certManager.renewBefore }}
+  subject:
+    organizations:
+    - bootchain
+  dnsNames:
+  - {{ include "bootchain-operator.fullname" . }}-webhook.{{ include "bootchain-operator.namespace" . }}.svc
+  - {{ include "bootchain-operator.fullname" . }}-webhook.{{ include "bootchain-operator.namespace" . }}.svc.cluster.local
+  issuerRef:
+    name: {{ include "bootchain-operator.fullname" . }}-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+{{- end }}
