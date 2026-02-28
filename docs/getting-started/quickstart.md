@@ -35,7 +35,7 @@ NAME           READY   RESOLVED   AGE
 payments-api   False   0/2        5s
 ```
 
-The `READY` column reflects TCP reachability. `0/2` means neither dependency is reachable yet — the services don't exist. That's expected.
+The `READY` column reflects reachability. `0/2` means neither dependency is reachable yet — the services don't exist. That's expected.
 
 ## 2. Deploy the application
 
@@ -107,7 +107,30 @@ spec:
 
 The init container for the `host` entry dials `db.example.com:5432` directly (no cluster DNS suffix). `service` and `host` entries can be mixed freely.
 
-## 5. Circular dependency detection
+## 5. HTTP health check
+
+Use `httpPath` to probe an HTTP endpoint instead of a raw TCP connection. Useful when a service binds its port before it is fully ready and exposes a `/healthz` or `/ready` endpoint:
+
+```yaml title="payments-api-deps-http.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - service: auth-service
+      port: 8080
+      httpPath: /healthz      # HTTP GET — waits for 2xx
+      timeout: 30s
+```
+
+The injected init container for `auth-service` will use `wget --spider` instead of `nc -z`, and only exit once it receives a `2xx` response.
+
+## 6. Circular dependency detection
 
 The validating webhook blocks dependency cycles. Try creating a cycle:
 
@@ -153,7 +176,7 @@ The cycle is blocked with a clear error message.
 
 ## Next steps
 
-- See more patterns (fan-in, chains, external hosts) in the [Examples](../examples.md)
+- See more patterns (fan-in, chains, external hosts, HTTP checks) in the [Examples](../examples.md)
 - Learn about all available fields in the [API Reference](../reference/api.md)
 - Configure the Helm chart with [Helm Values](../reference/helm-values.md)
 - Monitor the operator with [Metrics](../reference/metrics.md)

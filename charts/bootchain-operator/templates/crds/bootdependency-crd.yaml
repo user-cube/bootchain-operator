@@ -51,7 +51,6 @@ spec:
                   dependsOn is the list of services that must be reachable before the
                   Deployment with the same name in this namespace is allowed to start.
                 items:
-                  description: ServiceDependency defines a single service that must be reachable before the owner can start.
                   description: |-
                     ServiceDependency defines a single dependency that must be reachable before the owner can start.
                     Exactly one of `service` or `host` must be specified.
@@ -62,6 +61,14 @@ spec:
                         Use this for dependencies outside the cluster (e.g. a managed database, an external API).
                         Mutually exclusive with service.
                       minLength: 1
+                      type: string
+                    httpPath:
+                      description: |-
+                        httpPath is an optional HTTP path to probe instead of a raw TCP check.
+                        When set, the init container performs an HTTP GET to http://{target}:{port}{httpPath}
+                        and waits until a 2xx response is received.
+                        When omitted, a plain TCP connection check is used.
+                      pattern: ^/.*
                       type: string
                     port:
                       description: port is the TCP port that must be open on the dependency.
