@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/user-cube/bootchain-operator/compare/v1.0.1...v1.0.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* update semantic release ([6a543e3](https://github.com/user-cube/bootchain-operator/commit/6a543e3c7e460142429ea50cea3add68be1de2f2))
+
 ## [1.0.1](https://github.com/user-cube/bootchain-operator/compare/v1.0.0...v1.0.1) (2026-02-28)
 
 
