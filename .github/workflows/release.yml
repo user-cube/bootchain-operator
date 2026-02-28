@@ -57,6 +57,7 @@ jobs:
       charts_dir: charts
       config: .github/configs/cr.yaml
       push_oci: true
+      ref: refs/tags/v${{ needs.release.outputs.version }}
     secrets:
       GITHUB_APP_ID: ${{ secrets.DEVOPS_BUDDY_APP_ID }}
       GITHUB_APP_PRIVATE_KEY: ${{ secrets.DEVOPS_BUDDY_PRIVATE_KEY }}

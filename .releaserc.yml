@@ -13,6 +13,11 @@ plugins:
       populateChangelog: true
     }]
 
+  # Ensure version and appVersion have no "v" prefix (semver only, for OCI/Artifact Hub)
+  - ["@semantic-release/exec", {
+      prepareCmd: "python3 .github/scripts/normalize-chart-version.py charts/bootchain-operator/Chart.yaml"
+    }]
+
   # Update root CHANGELOG.md
   - ["@semantic-release/changelog", { changelogFile: "CHANGELOG.md" }]
 
