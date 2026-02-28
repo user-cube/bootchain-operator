@@ -1,0 +1,19 @@
+version: 1.0.0
+name: bootchain-operator
+displayName: Bootchain Operator
+description: Helm chart that deploys the Bootchain Operator.
+keywords:
+  - kubernetes
+  - operator
+  - init-containers
+  - boot-dependencies
+home: https://github.com/user-cube/bootchain-operator
+sources:
+  - https://github.com/user-cube/bootchain-operator
+license: Apache-2.0
+maintainers:
+  - name: user-cube
+annotations:
+  artifacthub.io/category: kubernetes
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/maintainers: user-cube

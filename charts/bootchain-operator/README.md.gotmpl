@@ -1,0 +1,27 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+## Install
+
+```bash
+helm install bootchain-operator oci://ghcr.io/user-cube/bootchain-operator/bootchain-operator \
+  --namespace bootchain-operator-system --create-namespace --wait
+```
+
+Requires [cert-manager](https://cert-manager.io/) for webhook TLS. See [documentation](https://user-cube.github.io/bootchain-operator/getting-started/installation/) for full install steps.
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "helm-docs.versionFooter" . }}

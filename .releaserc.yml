@@ -16,9 +16,17 @@ plugins:
   # Update root CHANGELOG.md
   - ["@semantic-release/changelog", { changelogFile: "CHANGELOG.md" }]
 
+  # Update chart CHANGELOG.md (same release notes as root)
+  - ["@semantic-release/changelog", { changelogFile: "charts/bootchain-operator/CHANGELOG.md" }]
+
   # Regenerate Helm chart README using helm-docs
   - ["@semantic-release/exec", {
       prepareCmd: "helm-docs --chart-search-root=charts/ --output-file=README.md"
+    }]
+
+  # Update Artifact Hub package metadata with changes parsed from CHANGELOG
+  - ["@semantic-release/exec", {
+      prepareCmd: "python3 .github/scripts/update-artifacthub-changes.py charts/bootchain-operator ${nextRelease.version}"
     }]
 
   # Commit all generated files
@@ -27,6 +35,7 @@ plugins:
         "charts/bootchain-operator/Chart.yaml",
         "charts/bootchain-operator/CHANGELOG.md",
         "charts/bootchain-operator/README.md",
+        "charts/bootchain-operator/artifacthub-pkg.yml",
         "CHANGELOG.md"
       ],
       message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
