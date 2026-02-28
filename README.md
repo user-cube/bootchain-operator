@@ -31,7 +31,7 @@ helm install cert-manager jetstack/cert-manager \
   --set crds.enabled=true --wait
 
 # Install bootchain-operator
-helm install bootchain-operator oci://ghcr.io/user-cube/charts/bootchain-operator \
+helm install bootchain-operator oci://ghcr.io/user-cube/bootchain-operator/bootchain-operator \
   --namespace bootchain-operator-system --create-namespace --wait
 ```
 
