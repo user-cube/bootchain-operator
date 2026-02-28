@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/user-cube/bootchain-operator/compare/v1.0.1...v1.0.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* Merge branch 'main' of github.com:user-cube/bootchain-operator ([30c55bf](https://github.com/user-cube/bootchain-operator/commit/30c55bf631fe3884a5e1e180fdbc7a4750a6ec6d))
+
 ## [1.0.1](https://github.com/user-cube/bootchain-operator/compare/v1.0.0...v1.0.1) (2026-02-28)
 
 
