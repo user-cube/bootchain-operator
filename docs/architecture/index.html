@@ -829,6 +829,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#init-container-image-minimal-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init container image: minimal-tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tls-and-cert-manager" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -984,6 +995,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#init-container-image-minimal-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init container image: minimal-tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tls-and-cert-manager" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1048,7 +1070,7 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   Controller    │    │         Webhook Server          │
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│                 │    │                                 │
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│  Reconcile loop │    │  MutatingWebhook  (Deployment)  │
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  TCP dial check │    │  ValidatingWebhook (BootDep)    │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  TCP/HTTP check │    │  ValidatingWebhook (BootDep)    │
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  Status update  │    │                                 │
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>└─────────────────┘    └─────────────────────────────────┘
 </code></pre></div>
@@ -1057,9 +1079,9 @@
 <p>The <code>BootDependencyReconciler</code> runs a reconciliation loop that:</p>
 <ol>
 <li>Fetches the <code>BootDependency</code> resource</li>
-<li>TCP-dials each declared dependency with a 3-second timeout:</li>
-<li><code>service</code> entries are resolved as <code>{service}.{namespace}.svc.cluster.local:{port}</code></li>
-<li><code>host</code> entries are dialled directly as <code>{host}:{port}</code></li>
+<li>Probes each declared dependency (3-second timeout per check):</li>
+<li>If <code>httpPath</code> is set: performs an HTTP(S) request to <code>{httpScheme}://{target}:{port}{httpPath}</code>. The method defaults to <code>GET</code> (override with <code>httpMethod</code>). Custom headers can be injected via <code>httpHeaders</code>. The accepted status codes default to any <code>2xx</code>; override with <code>httpExpectedStatuses</code>. When <code>insecure: true</code>, TLS certificate verification is skipped</li>
+<li>Otherwise: TCP-dials the address — <code>service</code> entries resolve as <code>{service}.{namespace}.svc.cluster.local:{port}</code>, <code>host</code> entries are dialled as <code>{host}:{port}</code></li>
 <li>Updates <code>status.resolvedDependencies</code> (e.g. <code>"2/3"</code>) and the <code>Ready</code> condition</li>
 <li>Emits Kubernetes events for reachable/unreachable dependencies</li>
 <li>Records Prometheus metrics</li>
@@ -1073,9 +1095,12 @@
 <li>The init container target is the <code>service</code> name (cluster DNS) or <code>host</code> value (used directly)</li>
 <li>Injection is <strong>idempotent</strong> — existing init containers with the same name are skipped</li>
 </ol>
-<p>The init containers use <code>busybox:1.36</code> and run:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timeout<span class="w"> </span><span class="o">{</span>timeout<span class="o">}</span><span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;until nc -z {target} {port}; do sleep 1; done&#39;</span>
-</code></pre></div></p>
+<p>The init containers use the <code>ghcr.io/user-cube/bootchain-operator/minimal-tools</code> image — a custom minimal image that bundles <code>netcat</code>, <code>wget</code>, and <code>curl</code>. The polling command depends on whether <code>httpPath</code> is set and which advanced fields are in use:</p>
+<ul>
+<li><strong>TCP check</strong> (default): <code>timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'</code></li>
+<li><strong>HTTP/HTTPS check</strong> (basic — <code>httpPath</code> set, no advanced fields): uses <code>wget --spider</code>. With <code>insecure: true</code>, adds <code>--no-check-certificate</code></li>
+<li><strong>Advanced HTTP/HTTPS check</strong> (<code>httpMethod</code>, <code>httpHeaders</code>, or <code>httpExpectedStatuses</code> set): switches to <code>curl</code>, which supports custom methods (<code>-X</code>), headers (<code>--header</code>), and status code extraction (<code>-w '%{http_code}'</code>). With <code>insecure: true</code>, adds <code>-k</code></li>
+</ul>
 <h3 id="validating-webhook-internalwebhookv1alpha1">Validating Webhook (<code>internal/webhook/v1alpha1</code>)<a class="headerlink" href="#validating-webhook-internalwebhookv1alpha1" title="Permanent link">&para;</a></h3>
 <p>The <code>BootDependencyCustomValidator</code> fires on <code>CREATE</code> and <code>UPDATE</code> of any <code>BootDependency</code>:</p>
 <ol>
@@ -1085,50 +1110,75 @@
 <li>Runs a depth-first search (DFS) from the incoming resource's name</li>
 <li>Rejects the request if a back-edge (cycle) is detected, including the full cycle path in the error message</li>
 </ol>
+<h2 id="init-container-image-minimal-tools">Init container image: minimal-tools<a class="headerlink" href="#init-container-image-minimal-tools" title="Permanent link">&para;</a></h2>
+<p>The init containers injected by the mutating webhook use a custom image — <code>ghcr.io/user-cube/bootchain-operator/minimal-tools</code> — instead of a generic <code>busybox</code>. This image is purpose-built to include exactly the tools needed for health probing:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>netcat</code> (<code>nc</code>)</td>
+<td>TCP connection checks (default probe)</td>
+</tr>
+<tr>
+<td><code>wget</code></td>
+<td>HTTP and HTTPS health checks (<code>httpPath</code>)</td>
+</tr>
+<tr>
+<td><code>curl</code></td>
+<td>Available for manual debugging inside init containers</td>
+</tr>
+</tbody>
+</table>
+<p>Using a dedicated image rather than a large general-purpose one keeps the image footprint small while providing all the probing primitives the operator needs. The image is versioned and published to GitHub Container Registry alongside the operator.</p>
 <h2 id="tls-and-cert-manager">TLS and cert-manager<a class="headerlink" href="#tls-and-cert-manager" title="Permanent link">&para;</a></h2>
 <p>The webhook server requires TLS. In production (Helm install), cert-manager automatically provisions a self-signed <code>Certificate</code> and injects the CA bundle into both <code>MutatingWebhookConfiguration</code> and <code>ValidatingWebhookConfiguration</code> via the <code>cert-manager.io/inject-ca-from</code> annotation.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>cert-manager Issuer (self-signed)
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>       │
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>       └─► Certificate → Secret (bootchain-operator-webhook-tls)
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                                  │
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>                          Deployment (volume mount)
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>                                  │
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>                          Webhook Server (:9443)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cert-manager Issuer (self-signed)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>       │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>       └─► Certificate → Secret (bootchain-operator-webhook-tls)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>                                  │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>                          Deployment (volume mount)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>                                  │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>                          Webhook Server (:9443)
 </code></pre></div>
 <h2 id="data-flow-init-container-injection">Data flow: init container injection<a class="headerlink" href="#data-flow-init-container-injection" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl apply -f deployment.yaml
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl apply -f deployment.yaml
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>        │
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        ▼
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>API Server → MutatingWebhookConfiguration
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        │
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        ▼
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>bootchain-operator webhook handler
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        │
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        ├─ GET BootDependency (same name, same namespace)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        │         │
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        │    found? ──yes──► inject wait-for-* init containers
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        │         │
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        │    not found? ──► pass through unchanged
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        │
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        ▼
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>API Server stores Deployment with injected init containers
+</code></pre></div>
+<h2 id="data-flow-cycle-detection">Data flow: cycle detection<a class="headerlink" href="#data-flow-cycle-detection" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl apply -f bootdependency.yaml
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>        │
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        ▼
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>API Server → MutatingWebhookConfiguration
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>API Server → ValidatingWebhookConfiguration
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        │
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        ▼
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>bootchain-operator webhook handler
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        │
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        ├─ GET BootDependency (same name, same namespace)
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        │         │
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        │    found? ──yes──► inject wait-for-* init containers
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        │         │
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        │    not found? ──► pass through unchanged
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>        │
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        ▼
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>API Server stores Deployment with injected init containers
-</code></pre></div>
-<h2 id="data-flow-cycle-detection">Data flow: cycle detection<a class="headerlink" href="#data-flow-cycle-detection" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl apply -f bootdependency.yaml
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>        │
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        ▼
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>API Server → ValidatingWebhookConfiguration
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        │
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        ▼
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>bootchain-operator webhook handler
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        │
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        ├─ LIST all BootDependencies in namespace
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        ├─ Build directed graph (name → [dependsOn services])
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        ├─ Add incoming resource to graph
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        ├─ DFS from incoming resource&#39;s name
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        │
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        ├─ cycle found? ──► 403 Forbidden with cycle path
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        └─ no cycle? ──────► 200 Allowed
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        ├─ LIST all BootDependencies in namespace
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        ├─ Build directed graph (name → [dependsOn services])
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        ├─ Add incoming resource to graph
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        ├─ DFS from incoming resource&#39;s name
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        │
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>        ├─ cycle found? ──► 403 Forbidden with cycle path
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        └─ no cycle? ──────► 200 Allowed
 </code></pre></div>
 
 

@@ -967,7 +967,8 @@
 <li><strong>Automatic init container injection</strong> — a mutating webhook injects <code>wait-for-*</code> init containers into matching Deployments</li>
 <li><strong>In-cluster and external dependencies</strong> — use <code>service</code> for Kubernetes Services in the same namespace, or <code>host</code> for external hostnames and IP addresses</li>
 <li><strong>Circular dependency detection</strong> — a validating webhook blocks any <code>BootDependency</code> that would create a dependency cycle</li>
-<li><strong>Status tracking</strong> — the controller continuously checks TCP reachability and updates <code>status.resolvedDependencies</code> (e.g. <code>2/3</code>) and <code>status.conditions</code></li>
+<li><strong>TCP, HTTP, and HTTPS health checks</strong> — probe dependencies with a raw TCP connection or an HTTP(S) request to a specific path (e.g. <code>/healthz</code>). Supports custom methods (<code>httpMethod</code>), request headers (<code>httpHeaders</code>), and accepted status codes (<code>httpExpectedStatuses</code>). TLS certificate verification is on by default; set <code>insecure: true</code> to accept self-signed certificates</li>
+<li><strong>Status tracking</strong> — the controller continuously probes each dependency and updates <code>status.resolvedDependencies</code> (e.g. <code>2/3</code>) and <code>status.conditions</code></li>
 <li><strong>Prometheus metrics</strong> — exposes reconciliation counters, duration histograms, and per-resource dependency gauges</li>
 <li><strong>Helm chart</strong> — production-ready chart with cert-manager TLS, leader election, and optional ServiceMonitor</li>
 </ul>

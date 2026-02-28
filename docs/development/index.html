@@ -1405,7 +1405,7 @@
 <h4 id="internalwebhook"><code>internal/webhook/</code><a class="headerlink" href="#internalwebhook" title="Permanent link">&para;</a></h4>
 <p>Two separate packages, one per API version being intercepted:</p>
 <ul>
-<li><strong><code>v1/</code></strong> — Mutating webhook on <code>apps/v1 Deployment</code>. Looks up a <code>BootDependency</code> with the same name in the same namespace and, if found, injects one <code>initContainer</code> per declared dependency using a <code>netcat</code>-based TCP probe.</li>
+<li><strong><code>v1/</code></strong> — Mutating webhook on <code>apps/v1 Deployment</code>. Looks up a <code>BootDependency</code> with the same name in the same namespace and, if found, injects one <code>initContainer</code> per declared dependency. Uses <code>netcat</code> for TCP probes and <code>wget</code> for HTTP/HTTPS probes, sourced from the custom <code>minimal-tools</code> image.</li>
 <li><strong><code>v1alpha1/</code></strong> — Validating webhook on <code>BootDependency</code> CREATE/UPDATE. Builds the full dependency graph for the namespace and runs a DFS cycle-detection algorithm before admitting the object.</li>
 </ul>
 <h4 id="chartsbootchain-operator"><code>charts/bootchain-operator/</code><a class="headerlink" href="#chartsbootchain-operator" title="Permanent link">&para;</a></h4>
