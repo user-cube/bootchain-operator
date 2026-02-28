@@ -61,8 +61,22 @@ func (v *BootDependencyCustomValidator) ValidateDelete(_ context.Context, _ *cor
 	return nil, nil
 }
 
-// validate checks for circular dependencies in the BootDependency graph for the namespace.
+// validate checks for mutual exclusion of service/host fields and circular
+// dependencies in the BootDependency graph for the namespace.
 func (v *BootDependencyCustomValidator) validate(ctx context.Context, bd *corev1alpha1.BootDependency) (admission.Warnings, error) {
+	// Validate that exactly one of service or host is set for each dependency.
+	for i, dep := range bd.Spec.DependsOn {
+		hasService := dep.Service != ""
+		hasHost := dep.Host != ""
+		if hasService == hasHost {
+			return nil, field.Invalid(
+				field.NewPath("spec", "dependsOn").Index(i),
+				dep,
+				"exactly one of service or host must be specified",
+			)
+		}
+	}
+
 	// Build a map of all BootDependency objects in the namespace, including the one being created/updated.
 	graph, err := v.buildGraph(ctx, bd)
 	if err != nil {

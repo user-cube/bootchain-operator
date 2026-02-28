@@ -22,8 +22,6 @@ import (
 
 // ServiceDependency defines a single dependency that must be reachable before the owner can start.
 // Exactly one of `service` or `host` must be specified.
-//
-// +kubebuilder:validation:XValidation:rule="(has(self.service) && self.service != ”) != (has(self.host) && self.host != ”)",message="exactly one of service or host must be specified"
 type ServiceDependency struct {
 	// service is the name of a Kubernetes Service in the same namespace to wait for.
 	// Mutually exclusive with host.

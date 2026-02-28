@@ -86,10 +86,6 @@ spec:
                   required:
                   - port
                   type: object
-                  x-kubernetes-validations:
-                  - message: exactly one of service or host must be specified
-                    rule: (has(self.service) && self.service != '') != (has(self.host)
-                      && self.host != '')
                 minItems: 1
                 type: array
             required:
