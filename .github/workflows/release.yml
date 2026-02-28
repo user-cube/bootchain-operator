@@ -58,13 +58,15 @@ jobs:
       version: ${{ needs.release.outputs.version }}
       dockerfile: "Dockerfile.tools"
       image-name: "minimal-tools"
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
     permissions:
       contents: read
       packages: write
 
   publish:
     name: Publish Helm Chart
-    needs: [release, docker]
+    needs: [release, docker, docker-minimal-tools]
     if: needs.release.outputs.new-release == 'true'
     uses: AutomationDojo/reusable-cicd/.github/workflows/helm-releaser.yml@main
     with:
@@ -78,7 +80,7 @@ jobs:
 
   docs:
     name: Build and Publish Docs
-    needs: [release, docker, publish]
+    needs: [release, docker, docker-minimal-tools, publish]
     if: needs.release.outputs.new-release == 'true'
     uses: AutomationDojo/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
     with:
