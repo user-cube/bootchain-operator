@@ -42,10 +42,13 @@ def parse_changelog_for_version(changelog_path: Path, version: str) -> list[dict
     """Parse CHANGELOG.md and return Artifact Hub changes list for the given version."""
     text = changelog_path.read_text(encoding="utf-8")
 
-    # Find the block for this version: "# 1.0.0 (date)" or "# 1.0.0"
+    # Find the block for this version. Supports:
+    #   # 1.0.0 (2026-02-28)
+    #   ## [1.0.2](https://...)(2026-02-28)
     version_escaped = re.escape(version)
     block_match = re.search(
-        rf"^#\s+{version_escaped}\s*(?:\([^)]+\))?\s*\n(.*?)(?=^#\s+\d|\Z)",
+        rf"^#+\s+(?:{version_escaped}\s*(?:\([^)]+\))?|\[{version_escaped}\](?:\([^)]+\))*(?:\s*\([^)]+\))?)\s*\n"
+        rf"(.*?)(?=^#+\s+(?:\d|\[)|\Z)",
         text,
         re.MULTILINE | re.DOTALL,
     )
