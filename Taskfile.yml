@@ -3,9 +3,40 @@ version: "3"
 vars:
   IMG: bootchain-operator:latest
   CRD_NAME: core.bootchain.ruicoelho.dev_bootdependencies.yaml
+  HELM_RELEASE: bootchain-operator
+  HELM_NAMESPACE: bootchain-operator-system
+  WEBHOOK_CERT_DIR: /tmp/bootchain-webhook-certs
 
 tasks:
-  # ── CRD ────────────────────────────────────────────────────────────────────
+  # ── Code generation (delegates to Makefile) ─────────────────────────────────
+  generate:
+    desc: Regenerate DeepCopy methods and CRD manifests
+    cmds:
+      - make generate manifests
+
+  # ── Build (delegates to Makefile) ───────────────────────────────────────────
+  build:
+    desc: Build the operator binary
+    cmds:
+      - make build
+
+  docker-build:
+    desc: Build the operator Docker image (IMG={{.IMG}})
+    cmds:
+      - make docker-build IMG={{.IMG}}
+
+  # ── Test / Lint (delegates to Makefile) ─────────────────────────────────────
+  test:
+    desc: Run unit and controller tests
+    cmds:
+      - make test
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - make lint
+
+  # ── CRD ─────────────────────────────────────────────────────────────────────
   install-crd:
     desc: Install the BootDependency CRD into the current cluster
     cmds:
@@ -16,7 +47,7 @@ tasks:
     cmds:
       - kubectl delete -f config/crd/bases/{{.CRD_NAME}} --ignore-not-found
 
-  # ── Run locally ────────────────────────────────────────────────────────────
+  # ── Run locally ─────────────────────────────────────────────────────────────
   run:
     desc: Run the operator locally (controller only, webhooks disabled)
     deps: [install-crd]
@@ -26,11 +57,9 @@ tasks:
   run-with-webhook:
     desc: Run the operator locally with webhooks enabled (requires dev certs)
     deps: [install-crd]
-    vars:
-      CERT_DIR: /tmp/bootchain-webhook-certs
     cmds:
       - go run ./cmd/main.go
-          --webhook-cert-path={{.CERT_DIR}}
+          --webhook-cert-path={{.WEBHOOK_CERT_DIR}}
           --webhook-cert-name=tls.crt
           --webhook-cert-key=tls.key
 
@@ -39,14 +68,14 @@ tasks:
     cmds:
       - socat TCP4-LISTEN:9444,fork,reuseaddr TCP6:[::1]:9443
 
-  # ── Webhook dev setup ───────────────────────────────────────────────────────
+  # ── Webhook dev setup ────────────────────────────────────────────────────────
   webhook-gen-certs:
     desc: Generate self-signed TLS certs for local webhook development
     cmds:
       - bash hack/gen-dev-certs.sh
 
   webhook-register:
-    desc: Register webhook configurations pointing to localhost
+    desc: Register MutatingWebhookConfiguration and ValidatingWebhookConfiguration pointing to localhost
     cmds:
       - bash hack/register-dev-webhook.sh
 
@@ -73,7 +102,7 @@ tasks:
       - task: webhook-register
       - task: webhook-enable-namespace
 
-  # ── Samples ────────────────────────────────────────────────────────────────
+  # ── Samples ──────────────────────────────────────────────────────────────────
   apply-sample:
     desc: Apply the sample BootDependency manifest
     cmds:
@@ -84,49 +113,40 @@ tasks:
     cmds:
       - kubectl delete -f config/samples/core_v1alpha1_bootdependency.yaml --ignore-not-found
 
-  # ── Helm ───────────────────────────────────────────────────────────────────
+  # ── Helm ─────────────────────────────────────────────────────────────────────
   helm-lint:
     desc: Lint the Helm chart
     cmds:
       - helm lint charts/bootchain-operator
 
   helm-template:
-    desc: Render the Helm chart templates to stdout
-    vars:
-      RELEASE: "{{.RELEASE | default \"bootchain-operator\"}}"
-      NAMESPACE: "{{.NAMESPACE | default \"bootchain-operator-system\"}}"
+    desc: Render Helm chart templates to stdout
     cmds:
-      - helm template {{.RELEASE}} charts/bootchain-operator --namespace {{.NAMESPACE}}
+      - helm template {{.HELM_RELEASE}} charts/bootchain-operator --namespace {{.HELM_NAMESPACE}}
 
   helm-install:
-    desc: Install the Helm chart into the cluster
-    vars:
-      RELEASE: "{{.RELEASE | default \"bootchain-operator\"}}"
-      NAMESPACE: "{{.NAMESPACE | default \"bootchain-operator-system\"}}"
+    desc: Install the Helm chart into the cluster (IMG=, HELM_RELEASE=, HELM_NAMESPACE=)
     cmds:
-      - kubectl create namespace {{.NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
-      - helm upgrade --install {{.RELEASE}} charts/bootchain-operator
-          --namespace {{.NAMESPACE}}
+      - kubectl create namespace {{.HELM_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+      - helm upgrade --install {{.HELM_RELEASE}} charts/bootchain-operator
+          --namespace {{.HELM_NAMESPACE}}
           --set image.repository={{.IMG | replace ":latest" ""}}
           --set image.tag=latest
           --wait
 
   helm-uninstall:
     desc: Uninstall the Helm release from the cluster
-    vars:
-      RELEASE: "{{.RELEASE | default \"bootchain-operator\"}}"
-      NAMESPACE: "{{.NAMESPACE | default \"bootchain-operator-system\"}}"
     cmds:
-      - helm uninstall {{.RELEASE}} --namespace {{.NAMESPACE}} --ignore-not-found
+      - helm uninstall {{.HELM_RELEASE}} --namespace {{.HELM_NAMESPACE}} --ignore-not-found
 
-  # ── Docs ───────────────────────────────────────────────────────────────────
+  # ── Docs ─────────────────────────────────────────────────────────────────────
   docs-serve:
     desc: Serve the MkDocs documentation locally (with live reload)
     cmds:
       - source venv/bin/activate && mkdocs serve
 
   docs-build:
-    desc: Build the MkDocs documentation into the site/ directory
+    desc: Build the MkDocs documentation into site/
     cmds:
       - source venv/bin/activate && mkdocs build --strict
 
