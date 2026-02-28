@@ -159,6 +159,22 @@ tasks:
     cmds:
       - helm uninstall {{.RELEASE}} --namespace {{.NAMESPACE}} --ignore-not-found
 
+  # ── Docs ───────────────────────────────────────────────────────────────────
+  docs-serve:
+    desc: Serve the MkDocs documentation locally (with live reload)
+    cmds:
+      - source venv/bin/activate && mkdocs serve
+
+  docs-build:
+    desc: Build the MkDocs documentation into the site/ directory
+    cmds:
+      - source venv/bin/activate && mkdocs build --strict
+
+  docs-deploy:
+    desc: Deploy the MkDocs documentation to GitHub Pages
+    cmds:
+      - source venv/bin/activate && mkdocs gh-deploy --force
+
   # ── Helpers ────────────────────────────────────────────────────────────────
   deps:
     desc: Tidy and download Go modules

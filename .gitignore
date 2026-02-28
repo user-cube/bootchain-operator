@@ -28,3 +28,9 @@ go.work
 
 # Kubeconfig might contain secrets
 *.kubeconfig
+
+# Python virtualenv
+venv/
+
+# MkDocs build output
+site/
