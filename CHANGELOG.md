@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/user-cube/bootchain-operator/compare/v1.0.5...v1.0.6) (2026-02-28)
+
+
+### Bug Fixes
+
+* bump app version ([dc26cdf](https://github.com/user-cube/bootchain-operator/commit/dc26cdf1a81c87f7435c0c969edc225418419082))
+
 ## [1.0.5](https://github.com/user-cube/bootchain-operator/compare/v1.0.4...v1.0.5) (2026-02-28)
 
 
