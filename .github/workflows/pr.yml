@@ -11,11 +11,11 @@ permissions:
 jobs:
   actionlint:
     name: Lint workflows
-    uses: user-cube/reusable-cicd/.github/workflows/actionlint.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/actionlint.yml@main
 
   go-build-and-test:
     name: Build and test
-    uses: user-cube/reusable-cicd/.github/workflows/golang-cli-apps_build-and-test-pr.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/golang-cli-apps_build-and-test-pr.yml@main
     with:
       pre-test: make setup-envtest
       test-cmd: make test
@@ -23,13 +23,13 @@ jobs:
 
   helm-lint:
     name: Lint Helm chart
-    uses: user-cube/reusable-cicd/.github/workflows/helm-lint.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/helm-lint.yml@main
     with:
       config: .github/configs/ct.yaml
 
   helm-docs:
     name: Update chart docs
-    uses: user-cube/reusable-cicd/.github/workflows/helm-docs.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/helm-docs.yml@main
     with:
       chart_search_root: charts/
       values_file: values.yaml
