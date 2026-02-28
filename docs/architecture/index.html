@@ -1040,7 +1040,7 @@
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>bootchain-operator is a Kubernetes operator built with <a href="https://book.kubebuilder.io/">Kubebuilder</a> and <a href="https://pkg.go.dev/sigs.k8s.io/controller-runtime">controller-runtime</a>. It consists of three components that work together:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                   Kubernetes API Server                  │
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                   Kubernetes API Server                 │
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>└──────────┬──────────────────────┬───────────────────────┘
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>           │ watch                │ admission review
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>           ▼                      ▼
@@ -1057,9 +1057,11 @@
 <p>The <code>BootDependencyReconciler</code> runs a reconciliation loop that:</p>
 <ol>
 <li>Fetches the <code>BootDependency</code> resource</li>
-<li>TCP-dials each declared service (<code>{service}.{namespace}.svc.cluster.local:{port}</code>) with a 3-second timeout</li>
+<li>TCP-dials each declared dependency with a 3-second timeout:</li>
+<li><code>service</code> entries are resolved as <code>{service}.{namespace}.svc.cluster.local:{port}</code></li>
+<li><code>host</code> entries are dialled directly as <code>{host}:{port}</code></li>
 <li>Updates <code>status.resolvedDependencies</code> (e.g. <code>"2/3"</code>) and the <code>Ready</code> condition</li>
-<li>Emits Kubernetes events for reachable/unreachable services</li>
+<li>Emits Kubernetes events for reachable/unreachable dependencies</li>
 <li>Records Prometheus metrics</li>
 <li>Requeues after <strong>30s</strong> if all ready, <strong>10s</strong> if not</li>
 </ol>
@@ -1067,16 +1069,18 @@
 <p>The <code>DeploymentCustomDefaulter</code> fires on <code>CREATE</code> and <code>UPDATE</code> of any <code>apps/v1 Deployment</code>:</p>
 <ol>
 <li>Looks up a <code>BootDependency</code> with the same <code>name</code> and <code>namespace</code> as the Deployment</li>
-<li>If found, prepends <code>wait-for-{service}</code> init containers for each <code>spec.dependsOn</code> entry</li>
+<li>If found, prepends a <code>wait-for-{target}</code> init container for each <code>spec.dependsOn</code> entry</li>
+<li>The init container target is the <code>service</code> name (cluster DNS) or <code>host</code> value (used directly)</li>
 <li>Injection is <strong>idempotent</strong> — existing init containers with the same name are skipped</li>
 </ol>
 <p>The init containers use <code>busybox:1.36</code> and run:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">until</span><span class="w"> </span>nc<span class="w"> </span>-z<span class="w"> </span><span class="o">{</span>service<span class="o">}</span><span class="w"> </span><span class="o">{</span>port<span class="o">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>sleep<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timeout<span class="w"> </span><span class="o">{</span>timeout<span class="o">}</span><span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;until nc -z {target} {port}; do sleep 1; done&#39;</span>
 </code></pre></div></p>
 <h3 id="validating-webhook-internalwebhookv1alpha1">Validating Webhook (<code>internal/webhook/v1alpha1</code>)<a class="headerlink" href="#validating-webhook-internalwebhookv1alpha1" title="Permanent link">&para;</a></h3>
 <p>The <code>BootDependencyCustomValidator</code> fires on <code>CREATE</code> and <code>UPDATE</code> of any <code>BootDependency</code>:</p>
 <ol>
-<li>Builds a directed dependency graph from all <code>BootDependency</code> resources in the namespace</li>
+<li>Validates that each <code>spec.dependsOn</code> entry specifies <strong>exactly one</strong> of <code>service</code> or <code>host</code></li>
+<li>Builds a directed dependency graph from all <code>BootDependency</code> resources in the namespace (<code>service</code> entries only — <code>host</code> entries are external leaf nodes and cannot form a <code>BootDependency</code> cycle)</li>
 <li>Adds the incoming resource to the graph</li>
 <li>Runs a depth-first search (DFS) from the incoming resource's name</li>
 <li>Rejects the request if a back-edge (cycle) is detected, including the full cycle path in the error message</li>
