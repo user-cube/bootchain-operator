@@ -67,18 +67,19 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	allReady := true
 
 	for _, dep := range bd.Spec.DependsOn {
-		addr := fmt.Sprintf("%s.%s.svc.cluster.local:%d", dep.Service, req.Namespace, dep.Port)
+		addr := depAddress(dep, req.Namespace)
+		label := depLabel(dep)
 		conn, err := net.DialTimeout("tcp", addr, dialTimeout)
 		if err != nil {
-			log.Info("Dependency not reachable", "service", dep.Service, "port", dep.Port, "error", err)
+			log.Info("Dependency not reachable", "dependency", label, "port", dep.Port, "error", err)
 			r.Recorder.Eventf(&bd, corev1.EventTypeWarning, "DependencyNotReady",
-				"Service %s:%d is not reachable", dep.Service, dep.Port)
+				"Dependency %s:%d is not reachable", label, dep.Port)
 			allReady = false
 			continue
 		}
-		conn.Close()
+		_ = conn.Close()
 		resolved++
-		log.Info("Dependency reachable", "service", dep.Service, "port", dep.Port)
+		log.Info("Dependency reachable", "dependency", label, "port", dep.Port)
 	}
 
 	dependenciesTotal.WithLabelValues(req.Namespace, req.Name).Set(float64(total))
@@ -124,6 +125,23 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	return ctrl.Result{RequeueAfter: requeueAfterNotReady}, nil
+}
+
+// depAddress returns the dial address for a dependency.
+// For in-cluster services it resolves to the FQDN; for external hosts it uses the host directly.
+func depAddress(dep corev1alpha1.ServiceDependency, namespace string) string {
+	if dep.Host != "" {
+		return fmt.Sprintf("%s:%d", dep.Host, dep.Port)
+	}
+	return fmt.Sprintf("%s.%s.svc.cluster.local:%d", dep.Service, namespace, dep.Port)
+}
+
+// depLabel returns a human-readable identifier for a dependency (for logs and events).
+func depLabel(dep corev1alpha1.ServiceDependency) string {
+	if dep.Host != "" {
+		return dep.Host
+	}
+	return dep.Service
 }
 
 // SetupWithManager sets up the controller with the Manager.

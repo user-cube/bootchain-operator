@@ -22,9 +22,10 @@ jobs:
   release:
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.docs_only != 'true')
     name: Semantic Release
-    uses: user-cube/reusable-cicd/.github/workflows/semantic-release_simple-release.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/semantic-release_simple-release.yml@main
     with:
       node-version: "20"
+      chart-path: "charts/bootchain-operator"
       extra-plugins: |
         semantic-release-helm
         @semantic-release/exec
@@ -41,7 +42,7 @@ jobs:
     name: Build and Push Docker Image
     needs: release
     if: needs.release.outputs.new-release == 'true'
-    uses: user-cube/reusable-cicd/.github/workflows/docker-build-push.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/docker-build-push.yml@main
     with:
       version: ${{ needs.release.outputs.version }}
     permissions:
@@ -52,7 +53,7 @@ jobs:
     name: Publish Helm Chart
     needs: [release, docker]
     if: needs.release.outputs.new-release == 'true'
-    uses: user-cube/reusable-cicd/.github/workflows/helm-releaser.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/helm-releaser.yml@main
     with:
       charts_dir: charts
       config: .github/configs/cr.yaml
@@ -66,7 +67,7 @@ jobs:
     name: Build and Publish Docs
     needs: [release, docker, publish]
     if: needs.release.outputs.new-release == 'true'
-    uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
     with:
       python-version: "3.x"
       docs-subdir: docs
@@ -78,7 +79,7 @@ jobs:
   docs-only:
     name: Build and Publish Docs (manual)
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.docs_only == 'true'
-    uses: user-cube/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
+    uses: AutomationDojo/reusable-cicd/.github/workflows/mkdocs-helm_deploy.yml@main
     with:
       python-version: "3.x"
       docs-subdir: docs

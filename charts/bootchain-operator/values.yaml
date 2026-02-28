@@ -94,7 +94,7 @@ webhook:
     enabled: true
     # Duration of the issued certificate.
     duration: "8760h"   # 1 year
-    renewBefore: "720h" # 30 days
+    renewBefore: "720h"  # 30 days
 
 ## @section CRD installation
 crds:

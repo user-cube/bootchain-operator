@@ -85,7 +85,29 @@ kubectl describe pod -l app=payments-api
 
 The pod will stay in `Init:0/2` until both `payments-db:5432` and `redis:6379` are reachable.
 
-## 4. Circular dependency detection
+## 4. External host dependency
+
+Use `host` instead of `service` when the dependency lives outside the cluster:
+
+```yaml title="payments-api-deps-external.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - host: db.example.com
+      port: 5432
+      timeout: 120s
+    - service: redis
+      port: 6379
+      timeout: 30s
+```
+
+The init container for the `host` entry dials `db.example.com:5432` directly (no cluster DNS suffix). `service` and `host` entries can be mixed freely.
+
+## 5. Circular dependency detection
 
 The validating webhook blocks dependency cycles. Try creating a cycle:
 
@@ -131,6 +153,7 @@ The cycle is blocked with a clear error message.
 
 ## Next steps
 
+- See more patterns (fan-in, chains, external hosts) in the [Examples](../examples.md)
 - Learn about all available fields in the [API Reference](../reference/api.md)
 - Configure the Helm chart with [Helm Values](../reference/helm-values.md)
 - Monitor the operator with [Metrics](../reference/metrics.md)

@@ -1,3 +1,31 @@
+# [1.1.0](https://github.com/user-cube/bootchain-operator/compare/v1.0.3...v1.1.0) (2026-02-28)
+
+
+### Features
+
+* add support for external host dependencies ([#6](https://github.com/user-cube/bootchain-operator/issues/6)) ([021527c](https://github.com/user-cube/bootchain-operator/commit/021527cfe1153daac447ee4fdd73bc1b39eb86f4))
+
+## [1.0.3](https://github.com/user-cube/bootchain-operator/compare/v1.0.2...v1.0.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* direct dependencies ([8e2491f](https://github.com/user-cube/bootchain-operator/commit/8e2491f3d260ca9c4052065f190cfbedbdb279c4))
+
+## [1.0.2](https://github.com/user-cube/bootchain-operator/compare/v1.0.1...v1.0.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* update semantic release ([6a543e3](https://github.com/user-cube/bootchain-operator/commit/6a543e3c7e460142429ea50cea3add68be1de2f2))
+
+## [1.0.1](https://github.com/user-cube/bootchain-operator/compare/v1.0.0...v1.0.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* update semantic release ([e28910a](https://github.com/user-cube/bootchain-operator/commit/e28910ac203ea49e072be5b283c57058febfedbd))
+
 # 1.0.0 (2026-02-28)
 
 
