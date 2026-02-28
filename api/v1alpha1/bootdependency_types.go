@@ -20,10 +20,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// HTTPHeader describes a custom header to be sent in HTTP(S) probes.
+type HTTPHeader struct {
+	// name is the header field name.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// value is the header field value.
+	Value string `json:"value"`
+}
+
 // ServiceDependency defines a single dependency that must be reachable before the owner can start.
 // Exactly one of `service` or `host` must be specified.
 // +kubebuilder:validation:XValidation:rule="!has(self.httpScheme) || has(self.httpPath)",message="httpScheme requires httpPath to be set"
 // +kubebuilder:validation:XValidation:rule="!has(self.insecure) || !self.insecure || has(self.httpPath)",message="insecure requires httpPath to be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.httpMethod) || has(self.httpPath)",message="httpMethod requires httpPath to be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.httpHeaders) || size(self.httpHeaders) == 0 || has(self.httpPath)",message="httpHeaders requires httpPath to be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.httpExpectedStatuses) || size(self.httpExpectedStatuses) == 0 || has(self.httpPath)",message="httpExpectedStatuses requires httpPath to be set"
 type ServiceDependency struct {
 	// service is the name of a Kubernetes Service in the same namespace to wait for.
 	// Mutually exclusive with host.
@@ -64,6 +76,26 @@ type ServiceDependency struct {
 	// Defaults to false.
 	// +optional
 	Insecure bool `json:"insecure,omitempty"`
+
+	// httpMethod is the HTTP verb to use when httpPath is set (e.g. GET, POST, HEAD).
+	// Must be an uppercase HTTP method name. Defaults to GET when omitted.
+	// Only meaningful when httpPath is set.
+	// +kubebuilder:validation:Pattern=`^[A-Z]+$`
+	// +optional
+	HTTPMethod string `json:"httpMethod,omitempty"`
+
+	// httpHeaders is a list of custom HTTP headers to include in the probe request.
+	// Useful for endpoints that require an Authorization header or other custom headers.
+	// Only meaningful when httpPath is set.
+	// +optional
+	HTTPHeaders []HTTPHeader `json:"httpHeaders,omitempty"`
+
+	// httpExpectedStatuses is a list of HTTP status codes that are considered a healthy response.
+	// When omitted, any 2xx status code (200–299) is accepted.
+	// Use this when a health endpoint returns a non-standard code such as 204 No Content.
+	// Only meaningful when httpPath is set.
+	// +optional
+	HTTPExpectedStatuses []int32 `json:"httpExpectedStatuses,omitempty"`
 
 	// timeout is how long to wait for this dependency before giving up.
 	// Defaults to 60s if not specified.

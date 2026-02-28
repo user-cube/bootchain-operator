@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -89,13 +90,25 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			if dep.Insecure {
 				httpClient = insecureClient
 			}
-			resp, err := httpClient.Get(url) //nolint:noctx
-			if err != nil {
-				checkErr = err
+			method := dep.HTTPMethod
+			if method == "" {
+				method = http.MethodGet
+			}
+			req, reqErr := http.NewRequest(method, url, nil) //nolint:noctx
+			if reqErr != nil {
+				checkErr = reqErr
 			} else {
-				_ = resp.Body.Close()
-				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-					checkErr = fmt.Errorf("HTTP %d", resp.StatusCode)
+				for _, h := range dep.HTTPHeaders {
+					req.Header.Set(h.Name, h.Value)
+				}
+				resp, err := httpClient.Do(req)
+				if err != nil {
+					checkErr = err
+				} else {
+					_ = resp.Body.Close()
+					if !statusAccepted(resp.StatusCode, dep.HTTPExpectedStatuses) {
+						checkErr = fmt.Errorf("HTTP %d", resp.StatusCode)
+					}
 				}
 			}
 		} else {
@@ -171,6 +184,15 @@ func depAddress(dep corev1alpha1.ServiceDependency, namespace string) string {
 		return fmt.Sprintf("%s:%d", dep.Host, dep.Port)
 	}
 	return fmt.Sprintf("%s.%s.svc.cluster.local:%d", dep.Service, namespace, dep.Port)
+}
+
+// statusAccepted returns true when code is in the accepted list.
+// When the list is empty it falls back to the 2xx range (200–299).
+func statusAccepted(code int, accepted []int32) bool {
+	if len(accepted) == 0 {
+		return code >= 200 && code < 300
+	}
+	return slices.Contains(accepted, int32(code))
 }
 
 // depLabel returns a human-readable identifier for a dependency (for logs and events).

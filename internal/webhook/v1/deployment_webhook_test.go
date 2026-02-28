@@ -155,4 +155,92 @@ var _ = Describe("buildWaitContainer", func() {
 			Expect(strings.Count(script, "https://api.example.com:443/health")).To(Equal(3))
 		})
 	})
+
+	Context("Advanced HTTP fields (curl path)", func() {
+		It("should use curl and the specified method when httpMethod is set", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:    "api",
+				Port:       8080,
+				HTTPPath:   "/healthz",
+				HTTPMethod: "POST",
+				Timeout:    "30s",
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("curl"))
+			Expect(script).To(ContainSubstring("-X POST"))
+			Expect(script).NotTo(ContainSubstring("wget"))
+		})
+
+		It("should include --header flags for each entry in httpHeaders", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:  "api",
+				Port:     8080,
+				HTTPPath: "/healthz",
+				HTTPHeaders: []corev1alpha1.HTTPHeader{
+					{Name: "Authorization", Value: "Bearer token123"},
+					{Name: "X-Trace-Id", Value: "abc"},
+				},
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("curl"))
+			Expect(script).To(ContainSubstring("--header 'Authorization: Bearer token123'"))
+			Expect(script).To(ContainSubstring("--header 'X-Trace-Id: abc'"))
+		})
+
+		It("should use -k flag (not --no-check-certificate) when insecure=true in curl mode", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:    "api",
+				Port:       443,
+				HTTPPath:   "/healthz",
+				HTTPScheme: "https",
+				Insecure:   true,
+				HTTPMethod: "HEAD",
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("curl"))
+			Expect(script).To(ContainSubstring(" -k"))
+			Expect(script).NotTo(ContainSubstring("--no-check-certificate"))
+		})
+
+		It("should use case pattern for explicit expected statuses", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:              "api",
+				Port:                 8080,
+				HTTPPath:             "/healthz",
+				HTTPExpectedStatuses: []int32{200, 204},
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("curl"))
+			Expect(script).To(ContainSubstring("200|204"))
+		})
+
+		It("should use arithmetic 2xx check when curl is needed but no explicit statuses are set", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:    "api",
+				Port:       8080,
+				HTTPPath:   "/healthz",
+				HTTPMethod: "HEAD",
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring(`[ "$STATUS" -ge 200 ]`))
+			Expect(script).To(ContainSubstring(`[ "$STATUS" -lt 300 ]`))
+		})
+
+		It("should keep wget path when none of the advanced fields are set", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:  "api",
+				Port:     8080,
+				HTTPPath: "/healthz",
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("wget"))
+			Expect(script).NotTo(ContainSubstring("curl"))
+		})
+	})
 })

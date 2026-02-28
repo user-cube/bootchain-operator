@@ -156,6 +156,48 @@ spec:
 
 ---
 
+### Advanced HTTP check (custom method, headers, and status codes)
+
+Use `httpMethod`, `httpHeaders`, and `httpExpectedStatuses` when a simple `GET`/`2xx` check is not enough. Common cases: endpoints that only accept `HEAD`, return `204`, or require an `Authorization` header.
+
+```yaml
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: auth-service
+      port: 8080
+      httpPath: /healthz
+      httpMethod: POST                   # probe with POST
+      httpHeaders:
+        - name: Authorization
+          value: Bearer my-bootstrap-token
+        - name: X-Probe-Source
+          value: bootchain
+      httpExpectedStatuses: [200, 204]   # accept 200 or 204
+      timeout: 30s
+    - service: metrics-svc
+      port: 9090
+      httpPath: /-/healthy
+      httpMethod: HEAD                   # lightweight HEAD probe
+      timeout: 10s
+    - service: storage
+      port: 8080
+      httpPath: /ping
+      httpExpectedStatuses: [204]        # ping returns 204 No Content
+      timeout: 20s
+```
+
+When `httpMethod`, `httpHeaders`, or `httpExpectedStatuses` are set, the init container uses `curl` instead of `wget`. With none of these fields, `wget --spider` is used (backward-compatible).
+
+!!! note
+    `httpMethod`, `httpHeaders`, and `httpExpectedStatuses` all require `httpPath` to be set. The API server rejects resources that specify any of these fields without `httpPath`.
+
+---
+
 ### HTTPS health check
 
 Use `httpScheme: https` together with `httpPath` to probe an HTTPS endpoint. By default TLS certificates are verified. Set `insecure: true` to skip verification (useful for services with self-signed certificates).

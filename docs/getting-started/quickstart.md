@@ -130,7 +130,35 @@ spec:
 
 The injected init container for `auth-service` will use `wget --spider` instead of `nc -z`, and only exit once it receives a `2xx` response.
 
-## 6. HTTPS health check
+## 6. Advanced HTTP check (custom method, headers, status codes)
+
+Use `httpMethod`, `httpHeaders`, and `httpExpectedStatuses` when the default `GET`/`2xx` probe is not sufficient:
+
+```yaml title="payments-api-deps-advanced.yaml"
+apiVersion: core.bootchain-operator.ruicoelho.dev/v1alpha1
+kind: BootDependency
+metadata:
+  name: payments-api
+  namespace: default
+spec:
+  dependsOn:
+    - service: payments-db
+      port: 5432
+      timeout: 60s
+    - service: auth-service
+      port: 8080
+      httpPath: /healthz
+      httpMethod: POST                   # probe with POST instead of GET
+      httpHeaders:
+        - name: Authorization
+          value: Bearer bootstrap-token  # endpoint requires auth
+      httpExpectedStatuses: [200, 204]   # accept 200 or 204
+      timeout: 30s
+```
+
+When any of these fields are set, the init container uses `curl` (instead of `wget`) to support custom methods, headers, and precise status code matching.
+
+## 7. HTTPS health check
 
 Add `httpScheme: https` to probe an HTTPS endpoint. Certificate verification is on by default — set `insecure: true` to accept self-signed certificates:
 
@@ -158,7 +186,7 @@ spec:
       timeout: 30s
 ```
 
-## 7. Circular dependency detection
+## 8. Circular dependency detection
 
 The validating webhook blocks dependency cycles. Try creating a cycle:
 
@@ -204,7 +232,7 @@ The cycle is blocked with a clear error message.
 
 ## Next steps
 
-- See more patterns (fan-in, chains, external hosts, HTTP/HTTPS checks) in the [Examples](../examples.md)
+- See more patterns (fan-in, chains, external hosts, HTTP/HTTPS/advanced checks) in the [Examples](../examples.md)
 - Learn about all available fields in the [API Reference](../reference/api.md)
 - Configure the Helm chart with [Helm Values](../reference/helm-values.md)
 - Monitor the operator with [Metrics](../reference/metrics.md)

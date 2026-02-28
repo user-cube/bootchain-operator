@@ -27,7 +27,7 @@ The `BootDependencyReconciler` runs a reconciliation loop that:
 
 1. Fetches the `BootDependency` resource
 2. Probes each declared dependency (3-second timeout per check):
-   - If `httpPath` is set: performs an HTTP(S) GET to `{httpScheme}://{target}:{port}{httpPath}` and requires a `2xx` response. The scheme defaults to `http`; set `httpScheme: https` for HTTPS. When `insecure: true`, TLS certificate verification is skipped (useful for self-signed certificates)
+   - If `httpPath` is set: performs an HTTP(S) request to `{httpScheme}://{target}:{port}{httpPath}`. The method defaults to `GET` (override with `httpMethod`). Custom headers can be injected via `httpHeaders`. The accepted status codes default to any `2xx`; override with `httpExpectedStatuses`. When `insecure: true`, TLS certificate verification is skipped
    - Otherwise: TCP-dials the address — `service` entries resolve as `{service}.{namespace}.svc.cluster.local:{port}`, `host` entries are dialled as `{host}:{port}`
 3. Updates `status.resolvedDependencies` (e.g. `"2/3"`) and the `Ready` condition
 4. Emits Kubernetes events for reachable/unreachable dependencies
@@ -43,11 +43,11 @@ The `DeploymentCustomDefaulter` fires on `CREATE` and `UPDATE` of any `apps/v1 D
 3. The init container target is the `service` name (cluster DNS) or `host` value (used directly)
 4. Injection is **idempotent** — existing init containers with the same name are skipped
 
-The init containers use the `ghcr.io/user-cube/bootchain-operator/minimal-tools` image — a custom minimal image that bundles `netcat`, `wget`, and `curl`. The polling command depends on whether `httpPath` is set:
+The init containers use the `ghcr.io/user-cube/bootchain-operator/minimal-tools` image — a custom minimal image that bundles `netcat`, `wget`, and `curl`. The polling command depends on whether `httpPath` is set and which advanced fields are in use:
 
 - **TCP check** (default): `timeout {timeout} sh -c 'until nc -z {target} {port}; do sleep 1; done'`
-- **HTTP check**: `timeout {timeout} sh -c 'until wget -q --spider http://{target}:{port}{httpPath}; do sleep 1; done'`
-- **HTTPS check** (`httpScheme: https`): same as HTTP but with `https://`. When `insecure: true`, `--no-check-certificate` is added to skip TLS verification
+- **HTTP/HTTPS check** (basic — `httpPath` set, no advanced fields): uses `wget --spider`. With `insecure: true`, adds `--no-check-certificate`
+- **Advanced HTTP/HTTPS check** (`httpMethod`, `httpHeaders`, or `httpExpectedStatuses` set): switches to `curl`, which supports custom methods (`-X`), headers (`--header`), and status code extraction (`-w '%{http_code}'`). With `insecure: true`, adds `-k`
 
 ### Validating Webhook (`internal/webhook/v1alpha1`)
 

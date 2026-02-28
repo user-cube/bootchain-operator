@@ -232,5 +232,87 @@ var _ = Describe("BootDependency Controller", func() {
 			})
 			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
 		})
+
+		It("should use the specified HTTP method when probing", func() {
+			capturedMethod := make(chan string, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				select {
+				case capturedMethod <- r.Method:
+				default:
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			_ = createAndReconcile("http-method-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPMethod: "POST"},
+			})
+			Expect(<-capturedMethod).To(Equal("POST"))
+		})
+
+		It("should send custom headers when httpHeaders is set", func() {
+			capturedHeader := make(chan string, 1)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				select {
+				case capturedHeader <- r.Header.Get("X-Custom-Header"):
+				default:
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			_ = createAndReconcile("http-headers-resource", []corev1alpha1.ServiceDependency{
+				{
+					Host:     host,
+					Port:     port,
+					HTTPPath: "/healthz",
+					HTTPHeaders: []corev1alpha1.HTTPHeader{
+						{Name: "X-Custom-Header", Value: "my-value"},
+					},
+				},
+			})
+			Expect(<-capturedHeader).To(Equal("my-value"))
+		})
+
+		It("should resolve when response matches an expected status code", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNoContent) // 204
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-status-204-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPExpectedStatuses: []int32{200, 204}},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
+
+		It("should not resolve when response does not match any expected status code", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK) // 200 — not in the expected list
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-status-mismatch-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz", HTTPExpectedStatuses: []int32{204}},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("0/1"))
+		})
+
+		It("should accept any 2xx when httpExpectedStatuses is omitted", func() {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusCreated) // 201
+			}))
+			DeferCleanup(srv.Close)
+			host, port := parseTestServer(srv)
+
+			updated := createAndReconcile("http-status-2xx-default-resource", []corev1alpha1.ServiceDependency{
+				{Host: host, Port: port, HTTPPath: "/healthz"},
+			})
+			Expect(updated.Status.ResolvedDependencies).To(Equal("1/1"))
+		})
 	})
 })

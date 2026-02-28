@@ -65,6 +65,44 @@ spec:
                         Mutually exclusive with service.
                       minLength: 1
                       type: string
+                    httpExpectedStatuses:
+                      description: |-
+                        httpExpectedStatuses is a list of HTTP status codes that are considered a healthy response.
+                        When omitted, any 2xx status code (200–299) is accepted.
+                        Use this when a health endpoint returns a non-standard code such as 204 No Content.
+                        Only meaningful when httpPath is set.
+                      items:
+                        format: int32
+                        type: integer
+                      type: array
+                    httpHeaders:
+                      description: |-
+                        httpHeaders is a list of custom HTTP headers to include in the probe request.
+                        Useful for endpoints that require an Authorization header or other custom headers.
+                        Only meaningful when httpPath is set.
+                      items:
+                        description: HTTPHeader describes a custom header to be sent
+                          in HTTP(S) probes.
+                        properties:
+                          name:
+                            description: name is the header field name.
+                            minLength: 1
+                            type: string
+                          value:
+                            description: value is the header field value.
+                            type: string
+                        required:
+                        - name
+                        - value
+                        type: object
+                      type: array
+                    httpMethod:
+                      description: |-
+                        httpMethod is the HTTP verb to use when httpPath is set (e.g. GET, POST, HEAD).
+                        Must be an uppercase HTTP method name. Defaults to GET when omitted.
+                        Only meaningful when httpPath is set.
+                      pattern: ^[A-Z]+$
+                      type: string
                     httpPath:
                       description: |-
                         httpPath is an optional HTTP(S) path to probe instead of a raw TCP check.
@@ -115,6 +153,14 @@ spec:
                     rule: '!has(self.httpScheme) || has(self.httpPath)'
                   - message: insecure requires httpPath to be set
                     rule: '!has(self.insecure) || !self.insecure || has(self.httpPath)'
+                  - message: httpMethod requires httpPath to be set
+                    rule: '!has(self.httpMethod) || has(self.httpPath)'
+                  - message: httpHeaders requires httpPath to be set
+                    rule: '!has(self.httpHeaders) || size(self.httpHeaders) == 0 ||
+                      has(self.httpPath)'
+                  - message: httpExpectedStatuses requires httpPath to be set
+                    rule: '!has(self.httpExpectedStatuses) || size(self.httpExpectedStatuses)
+                      == 0 || has(self.httpPath)'
                 minItems: 1
                 type: array
             required:

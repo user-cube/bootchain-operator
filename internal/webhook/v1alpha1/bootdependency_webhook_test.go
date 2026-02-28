@@ -161,6 +161,80 @@ var _ = Describe("BootDependency Webhook", func() {
 		})
 	})
 
+	Context("When creating a BootDependency with valid advanced HTTP configuration", func() {
+		It("should allow creation with all new HTTP fields when httpPath is set", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-full-http", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{
+							Host:                 "api.example.com",
+							Port:                 8080,
+							HTTPPath:             "/healthz",
+							HTTPMethod:           "POST",
+							HTTPHeaders:          []corev1alpha1.HTTPHeader{{Name: "X-Foo", Value: "bar"}},
+							HTTPExpectedStatuses: []int32{200, 204},
+						},
+					},
+				},
+			}
+			validator := &BootDependencyCustomValidator{Client: k8sClient}
+			warnings, err := validator.ValidateCreate(ctx, bd)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+	})
+
+	Context("CEL validation: new HTTP fields require httpPath", func() {
+		It("should reject httpMethod set without httpPath (via API server)", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-method-no-path", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Service: "api", Port: 8080, HTTPMethod: "POST"},
+					},
+				},
+			}
+			err := k8sClient.Create(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("httpMethod requires httpPath to be set"))
+		})
+
+		It("should reject httpHeaders set without httpPath (via API server)", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-headers-no-path", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{
+							Service: "api",
+							Port:    8080,
+							HTTPHeaders: []corev1alpha1.HTTPHeader{
+								{Name: "Authorization", Value: "Bearer x"},
+							},
+						},
+					},
+				},
+			}
+			err := k8sClient.Create(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("httpHeaders requires httpPath to be set"))
+		})
+
+		It("should reject httpExpectedStatuses set without httpPath (via API server)", func() {
+			bd := &corev1alpha1.BootDependency{
+				ObjectMeta: metav1.ObjectMeta{Name: "svc-statuses-no-path", Namespace: "default"},
+				Spec: corev1alpha1.BootDependencySpec{
+					DependsOn: []corev1alpha1.ServiceDependency{
+						{Service: "api", Port: 8080, HTTPExpectedStatuses: []int32{200}},
+					},
+				},
+			}
+			err := k8sClient.Create(ctx, bd)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("httpExpectedStatuses requires httpPath to be set"))
+		})
+	})
+
 	Context("When creating a BootDependency that introduces a circular dependency", func() {
 		BeforeEach(func() {
 			bdB := &corev1alpha1.BootDependency{

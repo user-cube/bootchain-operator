@@ -19,6 +19,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -108,9 +109,63 @@ func depTarget(dep corev1alpha1.ServiceDependency) string {
 	return dep.Service
 }
 
+// needsCurl reports whether any advanced HTTP fields are set that wget cannot handle.
+// wget --spider cannot use custom methods, send custom headers, or check specific status codes.
+func needsCurl(dep corev1alpha1.ServiceDependency) bool {
+	return dep.HTTPMethod != "" || len(dep.HTTPHeaders) > 0 || len(dep.HTTPExpectedStatuses) > 0
+}
+
+// buildCurlScript builds the sh -c script for the init container when advanced HTTP
+// fields (method, headers, or expected statuses) are in use.
+func buildCurlScript(url string, dep corev1alpha1.ServiceDependency, timeout string) string {
+	method := dep.HTTPMethod
+	if method == "" {
+		method = "GET"
+	}
+
+	var flagsBuilder strings.Builder
+	flagsBuilder.WriteString(fmt.Sprintf("-s -o /dev/null -w '%%{http_code}' -X %s", method))
+
+	if dep.Insecure {
+		flagsBuilder.WriteString(" -k")
+	}
+
+	for _, h := range dep.HTTPHeaders {
+		// Shell-escape single quotes in the header value.
+		safeVal := strings.ReplaceAll(h.Value, "'", `'\''`)
+		flagsBuilder.WriteString(fmt.Sprintf(" --header '%s: %s'", h.Name, safeVal))
+	}
+
+	curlFlags := flagsBuilder.String()
+
+	// Build the condition that decides whether the status code is acceptable.
+	var checkExpr string
+	if len(dep.HTTPExpectedStatuses) == 0 {
+		// Default: accept any 2xx.
+		checkExpr = `[ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]`
+	} else {
+		codes := make([]string, len(dep.HTTPExpectedStatuses))
+		for i, c := range dep.HTTPExpectedStatuses {
+			codes[i] = fmt.Sprintf("%d", c)
+		}
+		pattern := strings.Join(codes, "|")
+		checkExpr = fmt.Sprintf(`case "$STATUS" in %s) true ;; *) false ;; esac`, pattern)
+	}
+
+	return fmt.Sprintf(
+		"echo 'Waiting for %s...'; "+
+			"timeout %s sh -c '"+
+			`until STATUS=$(curl %s %s) && %s; `+
+			"do sleep 1; done"+
+			"'; "+
+			"echo '%s is ready'",
+		url, timeout, curlFlags, url, checkExpr, url,
+	)
+}
+
 // buildWaitContainer creates a minimal-tools init container that polls the given
-// host:port until it is reachable. When httpPath is set, an HTTP(S) GET is used
-// instead of a raw TCP check.
+// host:port until it is reachable. When httpPath is set, an HTTP(S) probe is used
+// instead of a raw TCP check. Uses curl when advanced HTTP fields are set; wget otherwise.
 func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.Container {
 	timeout := dep.Timeout
 	if timeout == "" {
@@ -126,18 +181,23 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 			scheme = "http"
 		}
 		url := fmt.Sprintf("%s://%s:%d%s", scheme, target, dep.Port, dep.HTTPPath)
-		// wget -q --spider exits 0 on any 2xx/3xx response.
-		// --no-check-certificate skips TLS verification for self-signed certs.
-		wgetFlags := "-q --spider"
-		if dep.Insecure {
-			wgetFlags += " --no-check-certificate"
+
+		if needsCurl(dep) {
+			script = buildCurlScript(url, dep, timeout)
+		} else {
+			// Default path: wget --spider exits 0 on any 2xx/3xx response.
+			// --no-check-certificate skips TLS verification for self-signed certs.
+			wgetFlags := "-q --spider"
+			if dep.Insecure {
+				wgetFlags += " --no-check-certificate"
+			}
+			script = fmt.Sprintf(
+				"echo 'Waiting for %s...'; "+
+					"timeout %s sh -c 'until wget %s %s; do sleep 1; done'; "+
+					"echo '%s is ready'",
+				url, timeout, wgetFlags, url, url,
+			)
 		}
-		script = fmt.Sprintf(
-			"echo 'Waiting for %s...'; "+
-				"timeout %s sh -c 'until wget %s %s; do sleep 1; done'; "+
-				"echo '%s is ready'",
-			url, timeout, wgetFlags, url, url,
-		)
 	} else {
 		script = fmt.Sprintf(
 			"echo 'Waiting for %s:%d...'; "+
