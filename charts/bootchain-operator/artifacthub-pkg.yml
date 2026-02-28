@@ -1,4 +1,4 @@
-version: 1.1.0
+version: 1.2.0
 name: bootchain-operator
 displayName: Bootchain Operator
 description: Helm chart that deploys the Bootchain Operator.
@@ -17,10 +17,28 @@ annotations:
   artifacthub.io/category: kubernetes
   artifacthub.io/license: Apache-2.0
   artifacthub.io/maintainers: user-cube
-createdAt: '2026-02-28T05:23:43Z'
+createdAt: '2026-02-28T23:23:27Z'
 changes:
-- kind: added
-  description: add support for external host dependencies ([#6](https://github.com/user-cube/bootchain-operator/issues/6))
+- kind: fixed
+  description: '**deps:** update kubernetes packages to v0.35.2 ([#11](https://github.com/user-cube/bootchain-operator/issues/11))
+    [skip ci]'
   links:
-  - name: Commit 021527c
-    url: https://github.com/user-cube/bootchain-operator/commit/021527cfe1153daac447ee4fdd73bc1b39eb86f4
+  - name: Commit ea56f99
+    url: https://github.com/user-cube/bootchain-operator/commit/ea56f99171267a642ceda5b949b6f512f8bcf4fc
+- kind: fixed
+  description: '**deps:** update module github.com/onsi/ginkgo/v2 to v2.28.1 ([#12](https://github.com/user-cube/bootchain-operator/issues/12))
+    [skip ci]'
+  links:
+  - name: Commit b2b8453
+    url: https://github.com/user-cube/bootchain-operator/commit/b2b84533ee61c2c71ef0f64058ea3cb52848f0d0
+- kind: fixed
+  description: '**deps:** update module github.com/onsi/gomega to v1.39.1 ([#9](https://github.com/user-cube/bootchain-operator/issues/9))
+    [skip ci]'
+  links:
+  - name: Commit ae94a08
+    url: https://github.com/user-cube/bootchain-operator/commit/ae94a08e9b01cc2c0e94388f36190eb88215d715
+- kind: added
+  description: add support for http checks ([#10](https://github.com/user-cube/bootchain-operator/issues/10))
+  links:
+  - name: Commit 5f66419
+    url: https://github.com/user-cube/bootchain-operator/commit/5f66419b8cc952b0923638ee63902a465ab87905

@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/user-cube/bootchain-operator/compare/v1.1.0...v1.2.0) (2026-02-28)
+
+
+### Bug Fixes
+
+* **deps:** update kubernetes packages to v0.35.2 ([#11](https://github.com/user-cube/bootchain-operator/issues/11)) [skip ci] ([ea56f99](https://github.com/user-cube/bootchain-operator/commit/ea56f99171267a642ceda5b949b6f512f8bcf4fc))
+* **deps:** update module github.com/onsi/ginkgo/v2 to v2.28.1 ([#12](https://github.com/user-cube/bootchain-operator/issues/12)) [skip ci] ([b2b8453](https://github.com/user-cube/bootchain-operator/commit/b2b84533ee61c2c71ef0f64058ea3cb52848f0d0))
+* **deps:** update module github.com/onsi/gomega to v1.39.1 ([#9](https://github.com/user-cube/bootchain-operator/issues/9)) [skip ci] ([ae94a08](https://github.com/user-cube/bootchain-operator/commit/ae94a08e9b01cc2c0e94388f36190eb88215d715))
+
+
+### Features
+
+* add support for http checks ([#10](https://github.com/user-cube/bootchain-operator/issues/10)) ([5f66419](https://github.com/user-cube/bootchain-operator/commit/5f66419b8cc952b0923638ee63902a465ab87905))
+
 # [1.1.0](https://github.com/user-cube/bootchain-operator/compare/v1.0.3...v1.1.0) (2026-02-28)
 
 
