@@ -2,38 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/architecture/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/development/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/examples/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/getting-started/installation/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/getting-started/quickstart/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/reference/api/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/reference/helm-values/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
          <loc>https://bootchain-operator.ruicoelho.dev/reference/metrics/</loc>
-         <lastmod>2026-02-28</lastmod>
+         <lastmod>2026-03-01</lastmod>
     </url>
 </urlset>
