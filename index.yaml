@@ -2,6 +2,29 @@ apiVersion: v1
 entries:
   bootchain-operator:
   - apiVersion: v2
+    appVersion: v1.2.4
+    created: "2026-03-01T00:32:43.481688673Z"
+    description: A Kubernetes operator that makes service boot dependencies declarative
+      and automatic, eliminating hand-written init containers.
+    digest: 1f18bd9a583df9beb4c28521fcda7a6e9bc2ec5ab31f43e1d4a88d2d2fce90d1
+    home: https://github.com/user-cube/bootchain-operator
+    icon: https://bootchain-operator.ruicoelho.dev/docs/assets/logo.png
+    keywords:
+    - kubernetes
+    - operator
+    - init-containers
+    - boot-dependencies
+    kubeVersion: '>=1.25.0'
+    maintainers:
+    - name: user-cube
+    name: bootchain-operator
+    sources:
+    - https://github.com/user-cube/bootchain-operator
+    type: application
+    urls:
+    - https://github.com/user-cube/bootchain-operator/releases/download/bootchain-operator-1.2.4/bootchain-operator-1.2.4.tgz
+    version: 1.2.4
+  - apiVersion: v2
     appVersion: v1.2.3
     created: "2026-03-01T00:07:02.894436524Z"
     description: A Kubernetes operator that makes service boot dependencies declarative
@@ -184,4 +207,4 @@ entries:
     urls:
     - https://github.com/user-cube/bootchain-operator/releases/download/bootchain-operator-0.1.0/bootchain-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-01T00:07:02.894469044Z"
+generated: "2026-03-01T00:32:43.481728218Z"
