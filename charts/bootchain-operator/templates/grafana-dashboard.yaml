@@ -24,7 +24,7 @@ data:
       ],
       "__elements": {},
       "__requires": [
-        { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+        { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "12.3.3" },
         { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
         { "type": "panel", "id": "gauge", "name": "Gauge", "version": "" },
         { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
@@ -55,6 +55,7 @@ data:
           "collapsed": false,
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
           "id": 100,
+          "panels": [],
           "title": "Overview",
           "type": "row"
         },
@@ -67,7 +68,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null }
+                  { "color": "green", "value": 0 }
                 ]
               },
               "unit": "short"
@@ -81,14 +82,17 @@ data:
             "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "textMode": "auto"
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "count(bootchain_dependencies_total{namespace=~\"$namespace\"}) or vector(0)",
+              "expr": "count(bootchain_dependencies_total{exported_namespace=~\"$namespace\"}) or vector(0)",
               "instant": true,
               "legendFormat": "",
               "refId": "A"
@@ -106,7 +110,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null }
+                  { "color": "green", "value": 0 }
                 ]
               },
               "unit": "short"
@@ -120,14 +124,17 @@ data:
             "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "textMode": "auto"
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "sum(bootchain_dependencies_ready{namespace=~\"$namespace\"}) or vector(0)",
+              "expr": "sum(bootchain_dependencies_ready{exported_namespace=~\"$namespace\"}) or vector(0)",
               "instant": true,
               "legendFormat": "",
               "refId": "A"
@@ -145,7 +152,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null },
+                  { "color": "green", "value": 0 },
                   { "color": "red", "value": 1 }
                 ]
               },
@@ -160,14 +167,17 @@ data:
             "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "textMode": "auto"
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "(sum(bootchain_dependencies_total{namespace=~\"$namespace\"}) or vector(0)) - (sum(bootchain_dependencies_ready{namespace=~\"$namespace\"}) or vector(0))",
+              "expr": "(sum(bootchain_dependencies_total{exported_namespace=~\"$namespace\"}) or vector(0)) - (sum(bootchain_dependencies_ready{exported_namespace=~\"$namespace\"}) or vector(0))",
               "instant": true,
               "legendFormat": "",
               "refId": "A"
@@ -187,7 +197,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null },
+                  { "color": "green", "value": 0 },
                   { "color": "yellow", "value": 0.01 },
                   { "color": "red", "value": 0.05 }
                 ]
@@ -203,10 +213,13 @@ data:
             "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "textMode": "auto"
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
@@ -228,7 +241,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null },
+                  { "color": "green", "value": 0 },
                   { "color": "yellow", "value": 1 },
                   { "color": "red", "value": 5 }
                 ]
@@ -244,10 +257,13 @@ data:
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "textMode": "auto"
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
@@ -264,6 +280,7 @@ data:
           "collapsed": false,
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
           "id": 101,
+          "panels": [],
           "title": "Dependency Health",
           "type": "row"
         },
@@ -278,7 +295,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "red", "value": null },
+                  { "color": "red", "value": 0 },
                   { "color": "yellow", "value": 0.5 },
                   { "color": "green", "value": 1 }
                 ]
@@ -295,15 +312,16 @@ data:
             "orientation": "auto",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
             "showThresholdLabels": false,
-            "showThresholdMarkers": true
+            "showThresholdMarkers": true,
+            "sizing": "auto"
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"} / bootchain_dependencies_total{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
+              "expr": "bootchain_dependencies_ready{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"} / bootchain_dependencies_total{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"}",
               "instant": true,
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}name{{ "}}" }}",
+              "legendFormat": "{{ "{{" }}exported_namespace{{ "}}" }}/{{ "{{" }}name{{ "}}" }}",
               "refId": "A"
             }
           ],
@@ -322,6 +340,7 @@ data:
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
@@ -332,12 +351,13 @@ data:
                 "pointSize": 5,
                 "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": { "group": "A", "mode": "none" },
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
               "unit": "short"
             },
             "overrides": []
@@ -346,19 +366,19 @@ data:
           "id": 11,
           "options": {
             "legend": { "calcs": ["lastNotNull", "min"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-            "tooltip": { "mode": "multi", "sort": "none" }
+            "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
           },
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}name{{ "}}" }} ready",
+              "expr": "bootchain_dependencies_ready{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"}",
+              "legendFormat": "{{ "{{" }}exported_namespace{{ "}}" }}/{{ "{{" }}name{{ "}}" }} ready",
               "refId": "A"
             },
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "bootchain_dependencies_total{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}name{{ "}}" }} total",
+              "expr": "bootchain_dependencies_total{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"}",
+              "legendFormat": "{{ "{{" }}exported_namespace{{ "}}" }}/{{ "{{" }}name{{ "}}" }} total",
               "refId": "B"
             }
           ],
@@ -372,66 +392,78 @@ data:
               "color": { "mode": "thresholds" },
               "custom": {
                 "align": "auto",
-                "cellOptions": { "type": "color-background" },
+                "cellOptions": { "type": "auto" },
+                "footer": { "reducers": [] },
                 "inspect": false
               },
-              "mappings": [
-                { "options": { "0": { "color": "red", "index": 0, "text": "Not Ready" }, "1": { "color": "green", "index": 1, "text": "Ready" } }, "type": "value" }
-              ],
+              "mappings": [],
               "thresholds": {
                 "mode": "absolute",
-                "steps": [
-                  { "color": "red", "value": null },
-                  { "color": "green", "value": 1 }
-                ]
+                "steps": [{ "color": "text", "value": 0 }]
               }
             },
             "overrides": [
-              { "matcher": { "id": "byName", "options": "namespace" }, "properties": [{ "id": "custom.width", "value": 160 }] },
-              { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "custom.width", "value": 220 }] },
+              {
+                "matcher": { "id": "byName", "options": "namespace" },
+                "properties": [
+                  { "id": "custom.width", "value": 693 },
+                  { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "text" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "name" },
+                "properties": [
+                  { "id": "custom.width", "value": 723 },
+                  { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "text" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "status" },
+                "properties": [
+                  { "id": "custom.width", "value": 313 },
+                  { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+                  { "id": "mappings", "value": [
+                    { "type": "value", "options": { "1": { "text": "Ready",     "color": "green", "index": 0 } } },
+                    { "type": "value", "options": { "0": { "text": "Not Ready", "color": "red",   "index": 1 } } }
+                  ]},
+                  { "id": "thresholds", "value": {
+                    "mode": "absolute",
+                    "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 1 }]
+                  }},
+                  { "id": "color", "value": { "mode": "thresholds" } }
+                ]
+              },
               {
                 "matcher": { "id": "byName", "options": "ready" },
                 "properties": [
-                  { "id": "custom.width", "value": 80 },
-                  { "id": "custom.cellOptions", "value": { "type": "auto" } }
+                  { "id": "custom.width", "value": 213 },
+                  { "id": "unit", "value": "short" }
                 ]
               },
               {
                 "matcher": { "id": "byName", "options": "total" },
                 "properties": [
-                  { "id": "custom.width", "value": 80 },
-                  { "id": "custom.cellOptions", "value": { "type": "auto" } }
-                ]
-              },
-              {
-                "matcher": { "id": "byName", "options": "Value #A" },
-                "properties": [
-                  { "id": "displayName", "value": "ready" },
-                  { "id": "custom.width", "value": 80 }
-                ]
-              },
-              {
-                "matcher": { "id": "byName", "options": "Value #B" },
-                "properties": [
-                  { "id": "displayName", "value": "total" },
-                  { "id": "custom.width", "value": 80 }
+                  { "id": "custom.width", "value": 215 },
+                  { "id": "unit", "value": "short" }
                 ]
               }
             ]
           },
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 14 },
           "id": 12,
           "options": {
             "cellHeight": "sm",
             "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
             "showHeader": true,
-            "sortBy": [{ "desc": true, "displayName": "ready" }]
+            "sortBy": [{ "desc": false, "displayName": "status" }]
           },
-          "pluginVersion": "10.0.0",
+          "pluginVersion": "12.3.3",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
+              "expr": "clamp_max(bootchain_dependencies_ready{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"} / bootchain_dependencies_total{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"}, 1)",
               "format": "table",
               "instant": true,
               "legendFormat": "",
@@ -439,46 +471,56 @@ data:
             },
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "bootchain_dependencies_total{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
+              "expr": "bootchain_dependencies_ready{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"}",
               "format": "table",
               "instant": true,
               "legendFormat": "",
               "refId": "B"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "bootchain_dependencies_total{exported_namespace=~\"$namespace\", name=~\"$bootdependency\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "",
+              "refId": "C"
             }
           ],
           "title": "BootDependency Status Table",
           "transformations": [
             {
-              "id": "joinByLabels",
-              "options": { "labels": ["namespace", "name"] }
+              "id": "joinByField",
+              "options": { "byField": "name", "mode": "outer" }
             },
             {
               "id": "organize",
               "options": {
-                "excludeByName": {},
+                "excludeByName": {
+                  "Time 1": true, "Time 2": true, "Time 3": true,
+                  "__name__ 1": true, "__name__ 2": true, "__name__ 3": true,
+                  "container 1": true, "container 2": true, "container 3": true,
+                  "endpoint 1": true, "endpoint 2": true, "endpoint 3": true,
+                  "exported_namespace 2": true, "exported_namespace 3": true,
+                  "instance 1": true, "instance 2": true, "instance 3": true,
+                  "job 1": true, "job 2": true, "job 3": true,
+                  "namespace 1": true, "namespace 2": true, "namespace 3": true,
+                  "pod 1": true, "pod 2": true, "pod 3": true,
+                  "service 1": true, "service 2": true, "service 3": true
+                },
                 "indexByName": {
-                  "namespace": 0,
+                  "exported_namespace 1": 0,
                   "name": 1,
                   "Value #A": 2,
-                  "Value #B": 3
+                  "Value #B": 3,
+                  "Value #C": 4
                 },
                 "renameByName": {
-                  "Value #A": "ready",
-                  "Value #B": "total"
+                  "exported_namespace 1": "namespace",
+                  "name": "name",
+                  "Value #A": "status",
+                  "Value #B": "ready",
+                  "Value #C": "total"
                 }
-              }
-            },
-            {
-              "id": "calculateField",
-              "options": {
-                "alias": "status",
-                "binary": {
-                  "left": "ready",
-                  "operator": "==",
-                  "right": "total"
-                },
-                "mode": "reduceRow",
-                "reduce": { "reducer": "sum" }
               }
             }
           ],
@@ -486,8 +528,9 @@ data:
         },
         {
           "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
           "id": 102,
+          "panels": [],
           "title": "Reconciliation",
           "type": "row"
         },
@@ -503,6 +546,7 @@ data:
                 "axisLabel": "reconciles / s",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
@@ -513,21 +557,22 @@ data:
                 "pointSize": 5,
                 "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": { "group": "A", "mode": "none" },
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
               "unit": "ops"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
           "id": 20,
           "options": {
             "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-            "tooltip": { "mode": "multi", "sort": "none" }
+            "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
           },
           "targets": [
             {
@@ -558,6 +603,7 @@ data:
                 "axisLabel": "seconds",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
@@ -568,21 +614,22 @@ data:
                 "pointSize": 5,
                 "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": { "group": "A", "mode": "none" },
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
               "unit": "s"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
           "id": 21,
           "options": {
             "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-            "tooltip": { "mode": "multi", "sort": "none" }
+            "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
           },
           "targets": [
             {
@@ -609,8 +656,9 @@ data:
         },
         {
           "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
           "id": 103,
+          "panels": [],
           "title": "Webhook",
           "type": "row"
         },
@@ -626,6 +674,7 @@ data:
                 "axisLabel": "requests / s",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
@@ -636,21 +685,22 @@ data:
                 "pointSize": 5,
                 "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": { "group": "A", "mode": "none" },
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
               "unit": "ops"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
           "id": 30,
           "options": {
             "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-            "tooltip": { "mode": "multi", "sort": "none" }
+            "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
           },
           "targets": [
             {
@@ -675,6 +725,7 @@ data:
                 "axisLabel": "seconds",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
@@ -685,21 +736,22 @@ data:
                 "pointSize": 5,
                 "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": { "group": "A", "mode": "none" },
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
               "unit": "s"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
           "id": 31,
           "options": {
             "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-            "tooltip": { "mode": "multi", "sort": "none" }
+            "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
           },
           "targets": [
             {
@@ -719,8 +771,9 @@ data:
           "type": "timeseries"
         }
       ],
+      "preload": false,
       "refresh": "30s",
-      "schemaVersion": 38,
+      "schemaVersion": 42,
       "tags": ["bootchain-operator", "kubernetes", "operator"],
       "templating": {
         "list": [
@@ -740,7 +793,7 @@ data:
           {
             "current": {},
             "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-            "definition": "label_values(bootchain_dependencies_total, namespace)",
+            "definition": "label_values(bootchain_dependencies_total, exported_namespace)",
             "hide": 0,
             "includeAll": true,
             "label": "Namespace",
@@ -748,7 +801,7 @@ data:
             "name": "namespace",
             "options": [],
             "query": {
-              "query": "label_values(bootchain_dependencies_total, namespace)",
+              "query": "label_values(bootchain_dependencies_total, exported_namespace)",
               "refId": "StandardVariableQuery"
             },
             "refresh": 2,
@@ -759,7 +812,7 @@ data:
           {
             "current": {},
             "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-            "definition": "label_values(bootchain_dependencies_total{namespace=~\"$namespace\"}, name)",
+            "definition": "label_values(bootchain_dependencies_total{exported_namespace=~\"$namespace\"}, name)",
             "hide": 0,
             "includeAll": true,
             "label": "BootDependency",
@@ -767,7 +820,7 @@ data:
             "name": "bootdependency",
             "options": [],
             "query": {
-              "query": "label_values(bootchain_dependencies_total{namespace=~\"$namespace\"}, name)",
+              "query": "label_values(bootchain_dependencies_total{exported_namespace=~\"$namespace\"}, name)",
               "refId": "StandardVariableQuery"
             },
             "refresh": 2,
@@ -782,6 +835,6 @@ data:
       "timezone": "browser",
       "title": "Bootchain Operator",
       "uid": "bootchain-operator-v1",
-      "version": 3
+      "version": 9
     }
 {{- end }}
