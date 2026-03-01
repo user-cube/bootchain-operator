@@ -124,7 +124,7 @@ func buildCurlScript(url string, dep corev1alpha1.ServiceDependency, timeout str
 	}
 
 	var flagsBuilder strings.Builder
-	flagsBuilder.WriteString(fmt.Sprintf("-s -o /dev/null -w '%%{http_code}' -X %s", method))
+	fmt.Fprintf(&flagsBuilder, "-s -o /dev/null -w '%%{http_code}' -X %s", method)
 
 	if dep.Insecure {
 		flagsBuilder.WriteString(" -k")
@@ -133,7 +133,7 @@ func buildCurlScript(url string, dep corev1alpha1.ServiceDependency, timeout str
 	for _, h := range dep.HTTPHeaders {
 		// Shell-escape single quotes in the header value.
 		safeVal := strings.ReplaceAll(h.Value, "'", `'\''`)
-		flagsBuilder.WriteString(fmt.Sprintf(" --header '%s: %s'", h.Name, safeVal))
+		fmt.Fprintf(&flagsBuilder, " --header '%s: %s'", h.Name, safeVal)
 	}
 
 	curlFlags := flagsBuilder.String()
@@ -157,9 +157,9 @@ func buildCurlScript(url string, dep corev1alpha1.ServiceDependency, timeout str
 			"timeout %s sh -c '"+
 			`until STATUS=$(curl %s %s) && %s; `+
 			"do sleep 1; done"+
-			"'; "+
+			"' || { echo 'Timed out waiting for %s'; exit 1; }; "+
 			"echo '%s is ready'",
-		url, timeout, curlFlags, url, checkExpr, url,
+		url, timeout, curlFlags, url, checkExpr, url, url,
 	)
 }
 
@@ -193,18 +193,21 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 			}
 			script = fmt.Sprintf(
 				"echo 'Waiting for %s...'; "+
-					"timeout %s sh -c 'until wget %s %s; do sleep 1; done'; "+
+					"timeout %s sh -c 'until wget %s %s; do sleep 1; done'"+
+					" || { echo 'Timed out waiting for %s'; exit 1; }; "+
 					"echo '%s is ready'",
-				url, timeout, wgetFlags, url, url,
+				url, timeout, wgetFlags, url, url, url,
 			)
 		}
 	} else {
 		script = fmt.Sprintf(
 			"echo 'Waiting for %s:%d...'; "+
-				"timeout %s sh -c 'until nc -z %s %d; do sleep 1; done'; "+
+				"timeout %s sh -c 'until nc -z %s %d; do sleep 1; done'"+
+				" || { echo 'Timed out waiting for %s:%d'; exit 1; }; "+
 				"echo '%s:%d is ready'",
 			target, dep.Port,
 			timeout,
+			target, dep.Port,
 			target, dep.Port,
 			target, dep.Port,
 		)

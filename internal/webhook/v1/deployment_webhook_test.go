@@ -82,6 +82,13 @@ var _ = Describe("buildWaitContainer", func() {
 			c := buildWaitContainer("wait-for-svc", dep)
 			Expect(c.Command[len(c.Command)-1]).To(ContainSubstring("timeout 60s"))
 		})
+
+		It("should exit 1 on timeout so the init container is not silently skipped", func() {
+			dep := corev1alpha1.ServiceDependency{Service: "my-db", Port: 5432, Timeout: "30s"}
+			c := buildWaitContainer("wait-for-my-db", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("exit 1"))
+		})
 	})
 
 	Context("HTTP dependency (httpPath set)", func() {
@@ -100,6 +107,18 @@ var _ = Describe("buildWaitContainer", func() {
 			Expect(script).NotTo(ContainSubstring("--no-check-certificate"))
 		})
 
+		It("should exit 1 on timeout (wget path) so the init container fails when service is unreachable", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:  "api",
+				Port:     8080,
+				HTTPPath: "/healthz",
+				Timeout:  "45s",
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("exit 1"))
+		})
+
 		It("should generate a wget-based script for an external host dep", func() {
 			dep := corev1alpha1.ServiceDependency{
 				Host:     "db.example.com",
@@ -109,7 +128,7 @@ var _ = Describe("buildWaitContainer", func() {
 			c := buildWaitContainer("wait-for-db.example.com", dep)
 			script := c.Command[len(c.Command)-1]
 			Expect(script).To(ContainSubstring("wget -q --spider http://db.example.com:5432/health"))
-			Expect(strings.Count(script, "http://db.example.com:5432/health")).To(Equal(3))
+			Expect(strings.Count(script, "http://db.example.com:5432/health")).To(Equal(4))
 		})
 	})
 
@@ -152,11 +171,23 @@ var _ = Describe("buildWaitContainer", func() {
 			c := buildWaitContainer("wait-for-api.example.com", dep)
 			script := c.Command[len(c.Command)-1]
 			Expect(script).To(ContainSubstring("wget -q --spider --no-check-certificate https://api.example.com:443/health"))
-			Expect(strings.Count(script, "https://api.example.com:443/health")).To(Equal(3))
+			Expect(strings.Count(script, "https://api.example.com:443/health")).To(Equal(4))
 		})
 	})
 
 	Context("Advanced HTTP fields (curl path)", func() {
+		It("should exit 1 on timeout (curl path) so the init container fails when service is unreachable", func() {
+			dep := corev1alpha1.ServiceDependency{
+				Service:    "api",
+				Port:       8080,
+				HTTPPath:   "/healthz",
+				HTTPMethod: "POST",
+			}
+			c := buildWaitContainer("wait-for-api", dep)
+			script := c.Command[len(c.Command)-1]
+			Expect(script).To(ContainSubstring("exit 1"))
+		})
+
 		It("should use curl and the specified method when httpMethod is set", func() {
 			dep := corev1alpha1.ServiceDependency{
 				Service:    "api",
