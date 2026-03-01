@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/user-cube/bootchain-operator/compare/v1.2.2...v1.2.3) (2026-03-01)
+
+
+### Bug Fixes
+
+* update minimal tools version ([31a9f93](https://github.com/user-cube/bootchain-operator/commit/31a9f93b82442a23453a6dfbde086690f77782b2))
+
 ## [1.2.2](https://github.com/user-cube/bootchain-operator/compare/v1.2.1...v1.2.2) (2026-02-28)
 
 

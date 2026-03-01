@@ -1,4 +1,4 @@
-version: 1.2.2
+version: 1.2.3
 name: bootchain-operator
 displayName: Bootchain Operator
 description: Helm chart that deploys the Bootchain Operator.
@@ -17,10 +17,10 @@ annotations:
   artifacthub.io/category: kubernetes
   artifacthub.io/license: Apache-2.0
   artifacthub.io/maintainers: user-cube
-createdAt: '2026-02-28T23:50:28Z'
+createdAt: '2026-03-01T00:03:48Z'
 changes:
 - kind: fixed
-  description: update LICENSE
+  description: update minimal tools version
   links:
-  - name: Commit 24587f3
-    url: https://github.com/user-cube/bootchain-operator/commit/24587f3559ee1212146c38ff64cc7018a885b118
+  - name: Commit 31a9f93
+    url: https://github.com/user-cube/bootchain-operator/commit/31a9f93b82442a23453a6dfbde086690f77782b2
