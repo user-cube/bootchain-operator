@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/user-cube/bootchain-operator/compare/v1.2.3...v1.2.4) (2026-03-01)
+
+
+### Bug Fixes
+
+* add safeguards for timeouts ([#13](https://github.com/user-cube/bootchain-operator/issues/13)) ([5a44651](https://github.com/user-cube/bootchain-operator/commit/5a446512af5e00b794224fa0835ed8e61ec41400))
+
 ## [1.2.3](https://github.com/user-cube/bootchain-operator/compare/v1.2.2...v1.2.3) (2026-03-01)
 
 

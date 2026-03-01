@@ -1,6 +1,6 @@
 # bootchain-operator
 
-![Version: 1.2.3](https://img.shields.io/badge/Version-1.2.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.2.3](https://img.shields.io/badge/AppVersion-v1.2.3-informational?style=flat-square)
+![Version: 1.2.4](https://img.shields.io/badge/Version-1.2.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.2.4](https://img.shields.io/badge/AppVersion-v1.2.4-informational?style=flat-square)
 
 A Kubernetes operator that makes service boot dependencies declarative and automatic, eliminating hand-written init containers.
 
