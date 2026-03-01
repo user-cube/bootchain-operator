@@ -207,7 +207,7 @@ For each entry in `spec.dependsOn`, the mutating webhook prepends an init contai
 ```yaml
 initContainers:
 - name: wait-for-payments-db
-  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:latest
   imagePullPolicy: IfNotPresent
   command:
   - sh
@@ -220,7 +220,7 @@ initContainers:
 ```yaml
 initContainers:
 - name: wait-for-auth-service
-  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:latest
   imagePullPolicy: IfNotPresent
   command:
   - sh
@@ -233,7 +233,7 @@ initContainers:
 ```yaml
 initContainers:
 - name: wait-for-secure-api
-  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:latest
   imagePullPolicy: IfNotPresent
   command:
   - sh
@@ -248,7 +248,7 @@ With `insecure: true`, `--no-check-certificate` is added to the `wget` command t
 ```yaml
 initContainers:
 - name: wait-for-auth-service
-  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0
+  image: ghcr.io/user-cube/bootchain-operator/minimal-tools:latest
   imagePullPolicy: IfNotPresent
   command:
   - sh

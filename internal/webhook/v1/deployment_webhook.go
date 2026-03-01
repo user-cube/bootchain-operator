@@ -212,7 +212,7 @@ func buildWaitContainer(name string, dep corev1alpha1.ServiceDependency) corev1.
 
 	return corev1.Container{
 		Name:            name,
-		Image:           "ghcr.io/user-cube/bootchain-operator/minimal-tools:1.2.0",
+		Image:           "ghcr.io/user-cube/bootchain-operator/minimal-tools:latest",
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command:         []string{"sh", "-c", script},
 	}
