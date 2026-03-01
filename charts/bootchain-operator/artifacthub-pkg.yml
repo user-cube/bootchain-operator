@@ -1,4 +1,4 @@
-version: 1.2.4
+version: 1.3.0
 name: bootchain-operator
 displayName: Bootchain Operator
 description: Helm chart that deploys the Bootchain Operator.
@@ -17,10 +17,10 @@ annotations:
   artifacthub.io/category: kubernetes
   artifacthub.io/license: Apache-2.0
   artifacthub.io/maintainers: user-cube
-createdAt: '2026-03-01T00:29:05Z'
+createdAt: '2026-03-01T01:06:47Z'
 changes:
-- kind: fixed
-  description: add safeguards for timeouts ([#13](https://github.com/user-cube/bootchain-operator/issues/13))
+- kind: added
+  description: add grafana dashboard ([#14](https://github.com/user-cube/bootchain-operator/issues/14))
   links:
-  - name: Commit 5a44651
-    url: https://github.com/user-cube/bootchain-operator/commit/5a446512af5e00b794224fa0835ed8e61ec41400
+  - name: Commit 5505a10
+    url: https://github.com/user-cube/bootchain-operator/commit/5505a104ee234e5f63f09af3231068c110014155

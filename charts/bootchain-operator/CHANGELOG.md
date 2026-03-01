@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/user-cube/bootchain-operator/compare/v1.2.4...v1.3.0) (2026-03-01)
+
+
+### Features
+
+* add grafana dashboard ([#14](https://github.com/user-cube/bootchain-operator/issues/14)) ([5505a10](https://github.com/user-cube/bootchain-operator/commit/5505a104ee234e5f63f09af3231068c110014155))
+
 ## [1.2.4](https://github.com/user-cube/bootchain-operator/compare/v1.2.3...v1.2.4) (2026-03-01)
 
 
