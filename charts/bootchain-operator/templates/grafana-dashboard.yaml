@@ -780,7 +780,7 @@ data:
       "time": { "from": "now-1h", "to": "now" },
       "timepicker": {},
       "timezone": "browser",
-      "title": "bootchain-operator",
+      "title": "Bootchain Operator",
       "uid": "bootchain-operator-v1",
       "version": 3
     }
