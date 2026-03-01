@@ -798,6 +798,89 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#grafana-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grafana dashboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Grafana dashboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setup-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-with-kube-prometheus-stack-grafana-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable with kube-prometheus-stack (Grafana sidecar)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-with-grafana-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable with Grafana Operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#suggested-alerts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1021,6 +1104,89 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#grafana-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grafana dashboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Grafana dashboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setup-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-with-kube-prometheus-stack-grafana-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable with kube-prometheus-stack (Grafana sidecar)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-with-grafana-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable with Grafana Operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#suggested-alerts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1157,21 +1323,203 @@
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--set<span class="w"> </span>metrics.serviceMonitor.additionalLabels.release<span class="o">=</span>prometheus
 </code></pre></div>
 <p>The <code>additionalLabels</code> must match your Prometheus instance's <code>serviceMonitorSelector</code>.</p>
+<h2 id="grafana-dashboard">Grafana dashboard<a class="headerlink" href="#grafana-dashboard" title="Permanent link">&para;</a></h2>
+<p>The Helm chart ships a pre-built Grafana dashboard that can be deployed as a ConfigMap and auto-discovered by the Grafana sidecar or Grafana Operator.</p>
+<h3 id="panels">Panels<a class="headerlink" href="#panels" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Panel</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overview</td>
+<td>BootDependency Resources</td>
+<td>Count of BootDependency objects being tracked</td>
+</tr>
+<tr>
+<td>Overview</td>
+<td>Dependencies Ready (total)</td>
+<td>Sum of all reachable dependencies across all resources</td>
+</tr>
+<tr>
+<td>Overview</td>
+<td>Dependencies Not Ready</td>
+<td>Sum of unresolved dependencies (red when &gt; 0)</td>
+</tr>
+<tr>
+<td>Overview</td>
+<td>Reconcile Error Rate</td>
+<td>Fraction of reconciliations that ended in error</td>
+</tr>
+<tr>
+<td>Overview</td>
+<td>Reconcile Latency p99</td>
+<td>99th-percentile reconcile duration</td>
+</tr>
+<tr>
+<td>Dependency Health</td>
+<td>Dependency Readiness Ratio</td>
+<td>Gauge showing ready/total per resource</td>
+</tr>
+<tr>
+<td>Dependency Health</td>
+<td>Ready vs Total Over Time</td>
+<td>Time-series of ready and total counts per resource</td>
+</tr>
+<tr>
+<td>Dependency Health</td>
+<td>BootDependency Status Table</td>
+<td>Per-resource table with ready / total counts</td>
+</tr>
+<tr>
+<td>Reconciliation</td>
+<td>Reconcile Throughput</td>
+<td>Reconcile rate (success vs error) over time</td>
+</tr>
+<tr>
+<td>Reconciliation</td>
+<td>Reconcile Duration (p50/p95/p99)</td>
+<td>Latency percentiles by result</td>
+</tr>
+<tr>
+<td>Webhook</td>
+<td>Webhook Request Rate</td>
+<td>Mutating and validating webhook request rates</td>
+</tr>
+<tr>
+<td>Webhook</td>
+<td>Webhook Latency (p95/p99)</td>
+<td>Webhook handler latency percentiles</td>
+</tr>
+</tbody>
+</table>
+<p>The dashboard includes two template variables — <strong>Namespace</strong> and <strong>BootDependency</strong> — that filter all panels to the selected resources.</p>
+<h3 id="setup-checklist">Setup checklist<a class="headerlink" href="#setup-checklist" title="Permanent link">&para;</a></h3>
+<p>Both items below are required. The dashboard will show <strong>"No data"</strong> if either is missing.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Requirement</th>
+<th>How to verify</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>ServiceMonitor enabled</strong> — Prometheus must be scraping the operator's <code>/metrics</code> endpoint</td>
+<td>Check <em>Status → Targets</em> in the Prometheus UI for a target named <code>bootchain-operator</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Dashboard label matches the Grafana sidecar/operator selector</strong> — the ConfigMap must carry the label the sidecar watches</td>
+<td>Check the sidecar's <code>GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH</code> or <code>sidecar.dashboards.label</code> in your Grafana Helm values</td>
+</tr>
+</tbody>
+</table>
+<h3 id="enable-with-kube-prometheus-stack-grafana-sidecar">Enable with kube-prometheus-stack (Grafana sidecar)<a class="headerlink" href="#enable-with-kube-prometheus-stack-grafana-sidecar" title="Permanent link">&para;</a></h3>
+<p>kube-prometheus-stack ships a Grafana sidecar that auto-discovers ConfigMaps carrying a specific label (default: <code>grafana_dashboard: "1"</code>). Both the ServiceMonitor and the dashboard ConfigMap must be enabled together:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>helm<span class="w"> </span>upgrade<span class="w"> </span>bootchain-operator<span class="w"> </span>charts/bootchain-operator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--set<span class="w"> </span>metrics.serviceMonitor.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--set<span class="w"> </span>metrics.serviceMonitor.additionalLabels.release<span class="o">=</span>prometheus<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--set<span class="w"> </span>grafana.dashboard.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--set<span class="w"> </span>grafana.dashboard.labels.grafana_dashboard<span class="o">=</span><span class="s2">&quot;1&quot;</span>
+</code></pre></div>
+<blockquote>
+<p><strong><code>additionalLabels.release</code></strong> must match the <code>serviceMonitorSelector</code> label of your Prometheus instance. A common value is <code>prometheus</code> or <code>kube-prometheus-stack</code>. Check with:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>prometheus<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[*].spec.serviceMonitorSelector}&#39;</span>
+</code></pre></div>
+If <code>serviceMonitorSelector</code> is empty (<code>{}</code>), all ServiceMonitors are picked up and the label can be omitted.</p>
+</blockquote>
+<p>The sidecar will pick up the ConfigMap and import the dashboard automatically — no manual import required.</p>
+<p><strong>Verifying the sidecar picked up the dashboard:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Check sidecar logs for &quot;Found ConfigMap&quot; or &quot;Updating dashboard&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>&lt;grafana-namespace&gt;<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>grafana<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-c<span class="w"> </span>grafana-sc-dashboard
+</code></pre></div>
+<h3 id="enable-with-grafana-operator">Enable with Grafana Operator<a class="headerlink" href="#enable-with-grafana-operator" title="Permanent link">&para;</a></h3>
+<p>If you use the Grafana Operator, set <code>grafana.dashboard.labels</code> to match your <code>GrafanaDashboard</code> label selector:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>helm<span class="w"> </span>upgrade<span class="w"> </span>bootchain-operator<span class="w"> </span>charts/bootchain-operator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--set<span class="w"> </span>metrics.serviceMonitor.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--set<span class="w"> </span>grafana.dashboard.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--set<span class="w"> </span>grafana.dashboard.labels.app<span class="o">=</span>grafana
+</code></pre></div>
+<h3 id="manual-import">Manual import<a class="headerlink" href="#manual-import" title="Permanent link">&para;</a></h3>
+<p>If you prefer to import the dashboard manually, extract the JSON from the ConfigMap and paste it into <strong>Grafana → Dashboards → Import</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configmap<span class="w"> </span>bootchain-operator-dashboard<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-n<span class="w"> </span>bootchain-operator-system<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.data.bootchain-operator\.json}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>bootchain-operator.json
+</code></pre></div>
+<p>Then open Grafana, go to <strong>Dashboards → Import</strong>, upload <code>bootchain-operator.json</code>, and select your Prometheus datasource.</p>
+<blockquote>
+<p>The ServiceMonitor must still be enabled for the imported dashboard to show data.</p>
+</blockquote>
+<h3 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h3>
+<p><strong>Dashboard does not appear in Grafana</strong></p>
+<ol>
+<li>Confirm the ConfigMap was created:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configmap<span class="w"> </span>bootchain-operator-dashboard<span class="w"> </span>-n<span class="w"> </span>bootchain-operator-system
+</code></pre></div></li>
+<li>Confirm the label on the ConfigMap matches the sidecar's <code>sidecar.dashboards.label</code> value (default <code>grafana_dashboard: "1"</code>):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configmap<span class="w"> </span>bootchain-operator-dashboard<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>-n<span class="w"> </span>bootchain-operator-system<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--show-labels
+</code></pre></div></li>
+<li>If the label is missing or wrong, either re-deploy with the correct <code>grafana.dashboard.labels</code> value, or patch it directly:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kubectl<span class="w"> </span>label<span class="w"> </span>configmap<span class="w"> </span>bootchain-operator-dashboard<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nv">grafana_dashboard</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-n<span class="w"> </span>bootchain-operator-system
+</code></pre></div></li>
+<li>Check the sidecar container logs (see <em>Enable with kube-prometheus-stack</em> above).</li>
+</ol>
+<hr />
+<p><strong>All panels show "No data"</strong></p>
+<ol>
+<li>
+<p>Confirm Prometheus is scraping the operator:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kubectl<span class="w"> </span>port-forward<span class="w"> </span>svc/bootchain-operator-metrics<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>-n<span class="w"> </span>bootchain-operator-system
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:8080/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>bootchain
+</code></pre></div>
+   If this returns metrics, the operator is healthy. If Prometheus is still not scraping it, the ServiceMonitor is likely missing or has the wrong labels.</p>
+</li>
+<li>
+<p>Check whether the ServiceMonitor exists:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>servicemonitor<span class="w"> </span>-n<span class="w"> </span>bootchain-operator-system
+</code></pre></div>
+   If it does not exist, enable it:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>helm<span class="w"> </span>upgrade<span class="w"> </span>bootchain-operator<span class="w"> </span>charts/bootchain-operator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--set<span class="w"> </span>metrics.serviceMonitor.enabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--set<span class="w"> </span>metrics.serviceMonitor.additionalLabels.release<span class="o">=</span>&lt;your-release-label&gt;
+</code></pre></div></p>
+</li>
+<li>
+<p>Verify the ServiceMonitor is being picked up by Prometheus (<em>Status → Targets</em> in the Prometheus UI). If the target is missing, the <code>additionalLabels</code> on the ServiceMonitor do not match your Prometheus instance's <code>serviceMonitorSelector</code>.</p>
+</li>
+<li>
+<p>In the Grafana dashboard, confirm the <strong>datasource</strong> variable at the top is pointing to the correct Prometheus instance.</p>
+</li>
+</ol>
 <h2 id="suggested-alerts">Suggested alerts<a class="headerlink" href="#suggested-alerts" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">groups</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bootchain-operator</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BootDependencyReconcileErrors</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rate(bootchain_reconcile_total{result=&quot;error&quot;}[5m]) &gt; 0</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bootchain-operator</span><span class="nv"> </span><span class="s">reconcile</span><span class="nv"> </span><span class="s">errors&quot;</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BootDependencyUnresolved</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bootchain_dependencies_ready &lt; bootchain_dependencies_total</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;BootDependency</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$labels.namespace</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">$labels.name</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">has</span><span class="nv"> </span><span class="s">unresolved</span><span class="nv"> </span><span class="s">dependencies&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">groups</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bootchain-operator</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BootDependencyReconcileErrors</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rate(bootchain_reconcile_total{result=&quot;error&quot;}[5m]) &gt; 0</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bootchain-operator</span><span class="nv"> </span><span class="s">reconcile</span><span class="nv"> </span><span class="s">errors&quot;</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BootDependencyUnresolved</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">    </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bootchain_dependencies_ready &lt; bootchain_dependencies_total</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;BootDependency</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$labels.namespace</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">$labels.name</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">has</span><span class="nv"> </span><span class="s">unresolved</span><span class="nv"> </span><span class="s">dependencies&quot;</span>
 </code></pre></div>
 
 
