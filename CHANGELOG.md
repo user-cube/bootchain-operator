@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/user-cube/bootchain-operator/compare/v1.3.2...v1.3.3) (2026-03-01)
+
+
+### Bug Fixes
+
+* update dashboard ([46d3938](https://github.com/user-cube/bootchain-operator/commit/46d393897e76c64d34b629e5a0324a083ea610dc))
+
 ## [1.3.2](https://github.com/user-cube/bootchain-operator/compare/v1.3.1...v1.3.2) (2026-03-01)
 
 
