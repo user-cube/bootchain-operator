@@ -40,6 +40,8 @@ Kubernetes: `>=1.25.0`
 | crds.install | bool | `true` |  |
 | crds.keep | bool | `true` |  |
 | fullnameOverride | string | `""` |  |
+| grafana.dashboard.enabled | bool | `false` |  |
+| grafana.dashboard.labels.grafana_dashboard | string | `"1"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"ghcr.io/user-cube/bootchain-operator"` |  |
 | image.tag | string | `""` |  |
