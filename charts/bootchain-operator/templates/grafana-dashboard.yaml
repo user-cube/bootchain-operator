@@ -62,13 +62,12 @@ data:
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "fieldConfig": {
             "defaults": {
-              "color": { "mode": "thresholds" },
+              "color": { "mode": "fixed", "fixedColor": "green" },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 1 }
+                  { "color": "green", "value": null }
                 ]
               },
               "unit": "short"
@@ -89,7 +88,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "count(bootchain_dependencies_total{namespace=~\"$namespace\"})",
+              "expr": "count(bootchain_dependencies_total{namespace=~\"$namespace\"}) or vector(0)",
               "instant": true,
               "legendFormat": "",
               "refId": "A"
@@ -107,8 +106,7 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "red", "value": null },
-                  { "color": "green", "value": 1 }
+                  { "color": "green", "value": null }
                 ]
               },
               "unit": "short"
@@ -129,7 +127,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "sum(bootchain_dependencies_ready{namespace=~\"$namespace\"})",
+              "expr": "sum(bootchain_dependencies_ready{namespace=~\"$namespace\"}) or vector(0)",
               "instant": true,
               "legendFormat": "",
               "refId": "A"
@@ -148,8 +146,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   { "color": "green", "value": null },
-                  { "color": "yellow", "value": 1 },
-                  { "color": "red", "value": 5 }
+                  { "color": "red", "value": 1 }
                 ]
               },
               "unit": "short"
@@ -170,7 +167,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "sum(bootchain_dependencies_total{namespace=~\"$namespace\"}) - sum(bootchain_dependencies_ready{namespace=~\"$namespace\"})",
+              "expr": "(sum(bootchain_dependencies_total{namespace=~\"$namespace\"}) or vector(0)) - (sum(bootchain_dependencies_ready{namespace=~\"$namespace\"}) or vector(0))",
               "instant": true,
               "legendFormat": "",
               "refId": "A"
@@ -184,7 +181,9 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "thresholds" },
-              "mappings": [],
+              "mappings": [
+                { "options": { "match": "null", "result": { "color": "green", "index": 0, "text": "0%" } }, "type": "special" }
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -201,7 +200,7 @@ data:
           "id": 4,
           "options": {
             "colorMode": "background",
-            "graphMode": "area",
+            "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
@@ -211,8 +210,8 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "rate(bootchain_reconcile_total{result=\"error\"}[$__rate_interval]) / rate(bootchain_reconcile_total[$__rate_interval])",
-              "instant": false,
+              "expr": "(sum(rate(bootchain_reconcile_total{result=\"error\"}[5m])) or vector(0)) / ((sum(rate(bootchain_reconcile_total[5m])) or vector(0)) > 0)",
+              "instant": true,
               "legendFormat": "",
               "refId": "A"
             }
@@ -388,10 +387,36 @@ data:
               }
             },
             "overrides": [
-              { "matcher": { "id": "byName", "options": "namespace" }, "properties": [{ "id": "custom.width", "value": 120 }] },
-              { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "custom.width", "value": 200 }] },
-              { "matcher": { "id": "byName", "options": "ready" }, "properties": [{ "id": "custom.width", "value": 80 }] },
-              { "matcher": { "id": "byName", "options": "total" }, "properties": [{ "id": "custom.width", "value": 70 }] }
+              { "matcher": { "id": "byName", "options": "namespace" }, "properties": [{ "id": "custom.width", "value": 160 }] },
+              { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "custom.width", "value": 220 }] },
+              {
+                "matcher": { "id": "byName", "options": "ready" },
+                "properties": [
+                  { "id": "custom.width", "value": 80 },
+                  { "id": "custom.cellOptions", "value": { "type": "auto" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "total" },
+                "properties": [
+                  { "id": "custom.width", "value": 80 },
+                  { "id": "custom.cellOptions", "value": { "type": "auto" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Value #A" },
+                "properties": [
+                  { "id": "displayName", "value": "ready" },
+                  { "id": "custom.width", "value": 80 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Value #B" },
+                "properties": [
+                  { "id": "displayName", "value": "total" },
+                  { "id": "custom.width", "value": 80 }
+                ]
+              }
             ]
           },
           "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
@@ -406,7 +431,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "label_replace(\n  bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"}\n  == bootchain_dependencies_total{namespace=~\"$namespace\", name=~\"$bootdependency\"},\n  \"status\", \"1\", \"\", \"\"\n) or label_replace(\n  bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"}\n  != bootchain_dependencies_total{namespace=~\"$namespace\", name=~\"$bootdependency\"},\n  \"status\", \"0\", \"\", \"\"\n)",
+              "expr": "bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
               "format": "table",
               "instant": true,
               "legendFormat": "",
@@ -414,42 +439,46 @@ data:
             },
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "bootchain_dependencies_ready{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
-              "format": "table",
-              "instant": true,
-              "legendFormat": "",
-              "refId": "B"
-            },
-            {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
               "expr": "bootchain_dependencies_total{namespace=~\"$namespace\", name=~\"$bootdependency\"}",
               "format": "table",
               "instant": true,
               "legendFormat": "",
-              "refId": "C"
+              "refId": "B"
             }
           ],
           "title": "BootDependency Status Table",
           "transformations": [
-            { "id": "joinByField", "options": { "byField": "name", "mode": "outer" } },
+            {
+              "id": "joinByLabels",
+              "options": { "labels": ["namespace", "name"] }
+            },
             {
               "id": "organize",
               "options": {
-                "excludeByName": {
-                  "Time": true, "Time 1": true, "Time 2": true, "Time 3": true,
-                  "namespace 2": true, "namespace 3": true,
-                  "__name__ 1": true, "__name__ 2": true, "__name__ 3": true,
-                  "job 1": true, "job 2": true, "job 3": true,
-                  "instance 1": true, "instance 2": true, "instance 3": true,
-                  "status": true
+                "excludeByName": {},
+                "indexByName": {
+                  "namespace": 0,
+                  "name": 1,
+                  "Value #A": 2,
+                  "Value #B": 3
                 },
                 "renameByName": {
-                  "namespace 1": "namespace",
-                  "name": "name",
-                  "Value #B": "ready",
-                  "Value #C": "total",
-                  "Value #A": "all_ready"
+                  "Value #A": "ready",
+                  "Value #B": "total"
                 }
+              }
+            },
+            {
+              "id": "calculateField",
+              "options": {
+                "alias": "status",
+                "binary": {
+                  "left": "ready",
+                  "operator": "==",
+                  "right": "total"
+                },
+                "mode": "reduceRow",
+                "reduce": { "reducer": "sum" }
               }
             }
           ],
@@ -751,8 +780,8 @@ data:
       "time": { "from": "now-1h", "to": "now" },
       "timepicker": {},
       "timezone": "browser",
-      "title": "bootchain-operator",
+      "title": "Bootchain Operator",
       "uid": "bootchain-operator-v1",
-      "version": 1
+      "version": 3
     }
 {{- end }}

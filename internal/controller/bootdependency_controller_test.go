@@ -194,6 +194,19 @@ var _ = Describe("BootDependency Controller", func() {
 			Expect(<-probed).To(Equal("/ready"))
 		})
 
+		It("should build FQDN from service name and BootDependency namespace for HTTP probes", func() {
+			// Unit-test depHost directly to guard against the regression where service-based
+			// HTTP probes used the bare service name instead of the FQDN, causing DNS lookup
+			// failures when the controller runs in a different namespace than the target service.
+			dep := corev1alpha1.ServiceDependency{Service: "my-svc", Port: 8080}
+			Expect(depHost(dep, "my-namespace")).To(Equal("my-svc.my-namespace.svc.cluster.local"))
+		})
+
+		It("should use the host field directly when set, not build a FQDN", func() {
+			dep := corev1alpha1.ServiceDependency{Host: "external.example.com", Port: 443}
+			Expect(depHost(dep, "any-namespace")).To(Equal("external.example.com"))
+		})
+
 		It("should resolve an HTTPS dependency when insecure=true and server has a self-signed cert", func() {
 			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
