@@ -194,30 +194,17 @@ var _ = Describe("BootDependency Controller", func() {
 			Expect(<-probed).To(Equal("/ready"))
 		})
 
-		It("should resolve service name to FQDN using the BootDependency namespace for HTTP probes", func() {
-			// This test guards against the bug where service-based HTTP probes used the bare
-			// service name (e.g. "my-svc") instead of the FQDN
-			// ("my-svc.<namespace>.svc.cluster.local"), which caused DNS lookup failures when
-			// the controller runs in a different namespace than the target service.
-			probed := make(chan string, 1)
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				select {
-				case probed <- r.Host:
-				default:
-				}
-				w.WriteHeader(http.StatusOK)
-			}))
-			DeferCleanup(srv.Close)
-			_, port := parseTestServer(srv)
+		It("should build FQDN from service name and BootDependency namespace for HTTP probes", func() {
+			// Unit-test depHost directly to guard against the regression where service-based
+			// HTTP probes used the bare service name instead of the FQDN, causing DNS lookup
+			// failures when the controller runs in a different namespace than the target service.
+			dep := corev1alpha1.ServiceDependency{Service: "my-svc", Port: 8080}
+			Expect(depHost(dep, "my-namespace")).To(Equal("my-svc.my-namespace.svc.cluster.local"))
+		})
 
-			// Use service (not host) — the controller must build the FQDN.
-			// We bind the test server on 127.0.0.1, so we override DNS resolution by
-			// checking the Host header sent by the HTTP client rather than actual DNS.
-			_ = createAndReconcile("http-fqdn-resource", []corev1alpha1.ServiceDependency{
-				{Service: "127.0.0.1", Port: port, HTTPPath: "/healthz"},
-			})
-			// The Host header must contain the FQDN, not the bare service name.
-			Expect(<-probed).To(ContainSubstring("svc.cluster.local"))
+		It("should use the host field directly when set, not build a FQDN", func() {
+			dep := corev1alpha1.ServiceDependency{Host: "external.example.com", Port: 443}
+			Expect(depHost(dep, "any-namespace")).To(Equal("external.example.com"))
 		})
 
 		It("should resolve an HTTPS dependency when insecure=true and server has a self-signed cert", func() {
