@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/user-cube/bootchain-operator/compare/v1.3.1...v1.3.2) (2026-03-01)
+
+
+### Bug Fixes
+
+* update ns names; update metrics ([b8e581f](https://github.com/user-cube/bootchain-operator/commit/b8e581f5225edabb1d605af5b4374c2639fe3a27))
+
 ## [1.3.1](https://github.com/user-cube/bootchain-operator/compare/v1.3.0...v1.3.1) (2026-03-01)
 
 
