@@ -95,17 +95,43 @@ The Helm chart ships a pre-built Grafana dashboard that can be deployed as a Con
 
 The dashboard includes two template variables — **Namespace** and **BootDependency** — that filter all panels to the selected resources.
 
+### Setup checklist
+
+Both items below are required. The dashboard will show **"No data"** if either is missing.
+
+| # | Requirement | How to verify |
+|---|---|---|
+| 1 | **ServiceMonitor enabled** — Prometheus must be scraping the operator's `/metrics` endpoint | Check _Status → Targets_ in the Prometheus UI for a target named `bootchain-operator` |
+| 2 | **Dashboard label matches the Grafana sidecar/operator selector** — the ConfigMap must carry the label the sidecar watches | Check the sidecar's `GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH` or `sidecar.dashboards.label` in your Grafana Helm values |
+
 ### Enable with kube-prometheus-stack (Grafana sidecar)
 
-kube-prometheus-stack uses the Grafana sidecar, which discovers ConfigMaps labelled `grafana_dashboard: "1"` (default).
+kube-prometheus-stack ships a Grafana sidecar that auto-discovers ConfigMaps carrying a specific label (default: `grafana_dashboard: "1"`). Both the ServiceMonitor and the dashboard ConfigMap must be enabled together:
 
 ```bash
 helm upgrade bootchain-operator charts/bootchain-operator \
+  --set metrics.serviceMonitor.enabled=true \
+  --set metrics.serviceMonitor.additionalLabels.release=prometheus \
   --set grafana.dashboard.enabled=true \
   --set grafana.dashboard.labels.grafana_dashboard="1"
 ```
 
+> **`additionalLabels.release`** must match the `serviceMonitorSelector` label of your Prometheus instance. A common value is `prometheus` or `kube-prometheus-stack`. Check with:
+> ```bash
+> kubectl get prometheus -A -o jsonpath='{.items[*].spec.serviceMonitorSelector}'
+> ```
+> If `serviceMonitorSelector` is empty (`{}`), all ServiceMonitors are picked up and the label can be omitted.
+
 The sidecar will pick up the ConfigMap and import the dashboard automatically — no manual import required.
+
+**Verifying the sidecar picked up the dashboard:**
+
+```bash
+# Check sidecar logs for "Found ConfigMap" or "Updating dashboard"
+kubectl logs -n <grafana-namespace> \
+  -l app.kubernetes.io/name=grafana \
+  -c grafana-sc-dashboard
+```
 
 ### Enable with Grafana Operator
 
@@ -113,6 +139,7 @@ If you use the Grafana Operator, set `grafana.dashboard.labels` to match your `G
 
 ```bash
 helm upgrade bootchain-operator charts/bootchain-operator \
+  --set metrics.serviceMonitor.enabled=true \
   --set grafana.dashboard.enabled=true \
   --set grafana.dashboard.labels.app=grafana
 ```
@@ -128,6 +155,57 @@ kubectl get configmap bootchain-operator-dashboard \
 ```
 
 Then open Grafana, go to **Dashboards → Import**, upload `bootchain-operator.json`, and select your Prometheus datasource.
+
+> The ServiceMonitor must still be enabled for the imported dashboard to show data.
+
+### Troubleshooting
+
+**Dashboard does not appear in Grafana**
+
+1. Confirm the ConfigMap was created:
+   ```bash
+   kubectl get configmap bootchain-operator-dashboard -n bootchain-operator-system
+   ```
+2. Confirm the label on the ConfigMap matches the sidecar's `sidecar.dashboards.label` value (default `grafana_dashboard: "1"`):
+   ```bash
+   kubectl get configmap bootchain-operator-dashboard \
+     -n bootchain-operator-system \
+     --show-labels
+   ```
+3. If the label is missing or wrong, either re-deploy with the correct `grafana.dashboard.labels` value, or patch it directly:
+   ```bash
+   kubectl label configmap bootchain-operator-dashboard \
+     grafana_dashboard="1" \
+     -n bootchain-operator-system
+   ```
+4. Check the sidecar container logs (see _Enable with kube-prometheus-stack_ above).
+
+---
+
+**All panels show "No data"**
+
+1. Confirm Prometheus is scraping the operator:
+   ```bash
+   kubectl port-forward svc/bootchain-operator-metrics 8080:8080 \
+     -n bootchain-operator-system
+   curl -s http://localhost:8080/metrics | grep bootchain
+   ```
+   If this returns metrics, the operator is healthy. If Prometheus is still not scraping it, the ServiceMonitor is likely missing or has the wrong labels.
+
+2. Check whether the ServiceMonitor exists:
+   ```bash
+   kubectl get servicemonitor -n bootchain-operator-system
+   ```
+   If it does not exist, enable it:
+   ```bash
+   helm upgrade bootchain-operator charts/bootchain-operator \
+     --set metrics.serviceMonitor.enabled=true \
+     --set metrics.serviceMonitor.additionalLabels.release=<your-release-label>
+   ```
+
+3. Verify the ServiceMonitor is being picked up by Prometheus (_Status → Targets_ in the Prometheus UI). If the target is missing, the `additionalLabels` on the ServiceMonitor do not match your Prometheus instance's `serviceMonitorSelector`.
+
+4. In the Grafana dashboard, confirm the **datasource** variable at the top is pointing to the correct Prometheus instance.
 
 ## Suggested alerts
 
