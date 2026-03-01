@@ -85,7 +85,7 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			if scheme == "" {
 				scheme = "http"
 			}
-			url := fmt.Sprintf("%s://%s:%d%s", scheme, depLabel(dep), dep.Port, dep.HTTPPath)
+			url := fmt.Sprintf("%s://%s:%d%s", scheme, depHost(dep, bd.Namespace), dep.Port, dep.HTTPPath)
 			httpClient := secureClient
 			if dep.Insecure {
 				httpClient = insecureClient
@@ -177,13 +177,21 @@ func (r *BootDependencyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{RequeueAfter: requeueAfterNotReady}, nil
 }
 
-// depAddress returns the dial address for a dependency.
+// depAddress returns the dial address (host:port) for a dependency.
 // For in-cluster services it resolves to the FQDN; for external hosts it uses the host directly.
 func depAddress(dep corev1alpha1.ServiceDependency, namespace string) string {
+	return fmt.Sprintf("%s:%d", depHost(dep, namespace), dep.Port)
+}
+
+// depHost returns the hostname for a dependency.
+// For in-cluster services it builds the FQDN <service>.<namespace>.svc.cluster.local so that
+// the controller — which runs in a different namespace — can always resolve the service correctly.
+// For external dependencies (host field set) it returns the host directly.
+func depHost(dep corev1alpha1.ServiceDependency, namespace string) string {
 	if dep.Host != "" {
-		return fmt.Sprintf("%s:%d", dep.Host, dep.Port)
+		return dep.Host
 	}
-	return fmt.Sprintf("%s.%s.svc.cluster.local:%d", dep.Service, namespace, dep.Port)
+	return fmt.Sprintf("%s.%s.svc.cluster.local", dep.Service, namespace)
 }
 
 // statusAccepted returns true when code is in the accepted list.
