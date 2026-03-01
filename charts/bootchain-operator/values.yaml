@@ -83,6 +83,18 @@ metrics:
     # Extra labels to add to the ServiceMonitor (e.g. to match a Prometheus instance selector).
     additionalLabels: {}
 
+## @section Grafana
+grafana:
+  dashboard:
+    # Deploy the bootchain-operator Grafana dashboard as a ConfigMap.
+    # Works with the Grafana sidecar (grafana.sidecar.dashboards.enabled=true)
+    # and with the Grafana Operator (GrafanaDashboard CRD).
+    enabled: false
+    # Labels applied to the ConfigMap so the Grafana sidecar or operator can discover it.
+    # Typical kube-prometheus-stack value: { grafana_dashboard: "1" }
+    labels:
+      grafana_dashboard: "1"
+
 ## @section Webhooks
 webhook:
   enabled: true

@@ -72,6 +72,63 @@ helm upgrade bootchain-operator charts/bootchain-operator \
 
 The `additionalLabels` must match your Prometheus instance's `serviceMonitorSelector`.
 
+## Grafana dashboard
+
+The Helm chart ships a pre-built Grafana dashboard that can be deployed as a ConfigMap and auto-discovered by the Grafana sidecar or Grafana Operator.
+
+### Panels
+
+| Section | Panel | Description |
+|---|---|---|
+| Overview | BootDependency Resources | Count of BootDependency objects being tracked |
+| Overview | Dependencies Ready (total) | Sum of all reachable dependencies across all resources |
+| Overview | Dependencies Not Ready | Sum of unresolved dependencies (red when > 0) |
+| Overview | Reconcile Error Rate | Fraction of reconciliations that ended in error |
+| Overview | Reconcile Latency p99 | 99th-percentile reconcile duration |
+| Dependency Health | Dependency Readiness Ratio | Gauge showing ready/total per resource |
+| Dependency Health | Ready vs Total Over Time | Time-series of ready and total counts per resource |
+| Dependency Health | BootDependency Status Table | Per-resource table with ready / total counts |
+| Reconciliation | Reconcile Throughput | Reconcile rate (success vs error) over time |
+| Reconciliation | Reconcile Duration (p50/p95/p99) | Latency percentiles by result |
+| Webhook | Webhook Request Rate | Mutating and validating webhook request rates |
+| Webhook | Webhook Latency (p95/p99) | Webhook handler latency percentiles |
+
+The dashboard includes two template variables — **Namespace** and **BootDependency** — that filter all panels to the selected resources.
+
+### Enable with kube-prometheus-stack (Grafana sidecar)
+
+kube-prometheus-stack uses the Grafana sidecar, which discovers ConfigMaps labelled `grafana_dashboard: "1"` (default).
+
+```bash
+helm upgrade bootchain-operator charts/bootchain-operator \
+  --set grafana.dashboard.enabled=true \
+  --set grafana.dashboard.labels.grafana_dashboard="1"
+```
+
+The sidecar will pick up the ConfigMap and import the dashboard automatically — no manual import required.
+
+### Enable with Grafana Operator
+
+If you use the Grafana Operator, set `grafana.dashboard.labels` to match your `GrafanaDashboard` label selector:
+
+```bash
+helm upgrade bootchain-operator charts/bootchain-operator \
+  --set grafana.dashboard.enabled=true \
+  --set grafana.dashboard.labels.app=grafana
+```
+
+### Manual import
+
+If you prefer to import the dashboard manually, extract the JSON from the ConfigMap and paste it into **Grafana → Dashboards → Import**:
+
+```bash
+kubectl get configmap bootchain-operator-dashboard \
+  -n bootchain-operator-system \
+  -o jsonpath='{.data.bootchain-operator\.json}' > bootchain-operator.json
+```
+
+Then open Grafana, go to **Dashboards → Import**, upload `bootchain-operator.json`, and select your Prometheus datasource.
+
 ## Suggested alerts
 
 ```yaml
