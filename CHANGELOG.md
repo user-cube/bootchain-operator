@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/user-cube/bootchain-operator/compare/v1.3.0...v1.3.1) (2026-03-01)
+
+
+### Bug Fixes
+
+* update dashboard; use full fqdn ([#15](https://github.com/user-cube/bootchain-operator/issues/15)) ([dfe671b](https://github.com/user-cube/bootchain-operator/commit/dfe671b9076b49da34c7eb99891b149afcdf9f29))
+
 # [1.3.0](https://github.com/user-cube/bootchain-operator/compare/v1.2.4...v1.3.0) (2026-03-01)
 
 

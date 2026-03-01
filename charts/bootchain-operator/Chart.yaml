@@ -4,8 +4,8 @@ description: >-
   A Kubernetes operator that makes service boot dependencies declarative and
   automatic, eliminating hand-written init containers.
 type: application
-version: 1.3.0
-appVersion: v1.3.0
+version: 1.3.1
+appVersion: v1.3.1
 keywords:
   - kubernetes
   - operator
