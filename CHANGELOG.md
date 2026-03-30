@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/user-cube/bootchain-operator/compare/v1.3.3...v1.3.4) (2026-03-30)
+
+
+### Bug Fixes
+
+* **deps:** update kubernetes monorepo to v0.35.3 ([#21](https://github.com/user-cube/bootchain-operator/issues/21)) ([b4b9446](https://github.com/user-cube/bootchain-operator/commit/b4b9446d602124d15066a257aecbda5a96fd73a1))
+
 ## [1.3.3](https://github.com/user-cube/bootchain-operator/compare/v1.3.2...v1.3.3) (2026-03-01)
 
 
