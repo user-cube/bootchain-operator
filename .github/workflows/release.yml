@@ -58,8 +58,6 @@ jobs:
       version: ${{ needs.release.outputs.version }}
       dockerfile: "Dockerfile.tools"
       image-name: "minimal-tools"
-    secrets:
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
     permissions:
       contents: read
       packages: write
